@@ -1,0 +1,11 @@
+using from './MaterialDescriptions';
+using from './MaterialGroups';
+using from './MaterialMaster';
+using from './MaterialPlantData';
+using from './Plant';
+using from './PurchasingDocumentTypes';
+using from './PurchasingGroups';
+using from './PurchasingGroups';
+using from './PurchasingOrganizationData';
+using from './StorageLocations';
+using from './VendorMaster';

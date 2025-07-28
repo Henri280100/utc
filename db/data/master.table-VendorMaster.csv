@@ -1,0 +1,31 @@
+supplier,supplierName,country_code,city,street
+VEND001,Sydney Auto Traders,AU,Sydney,123 George St
+VEND002,Melbourne Used Cars,AU,Melbourne,456 Collins St
+VEND003,Brisbane Car Sales,AU,Brisbane,789 Queen St
+VEND004,Perth Auto Mart,AU,Perth,101 Hay St
+VEND005,Adelaide Vehicle Co,AU,Adelaide,202 King William St
+VEND006,Canberra Auto Deals,AU,Canberra,303 Northbourne Ave
+VEND007,Hobart Car Traders,AU,Hobart,404 Macquarie St
+VEND008,Darwin Auto Sales,AU,Darwin,505 Stuart Hwy
+VEND009,Gold Coast Cars,AU,Gold Coast,606 Southport Rd
+VEND010,Newcastle Auto Hub,AU,Newcastle,707 Hunter St
+VEND011,Wollongong Motors,AU,Wollongong,808 Crown St
+VEND012,Geelong Car Co,AU,Geelong,909 Moorabool St
+VEND013,Townsville Vehicles,AU,Townsville,1010 Flinders St
+VEND014,Cairns Auto Traders,AU,Cairns,1111 Sheridan St
+VEND015,Toowoomba Cars,AU,Toowoomba,1212 Ruthven St
+VEND016,Ballarat Auto Sales,AU,Ballarat,1313 Sturt St
+VEND017,Bendigo Car Mart,AU,Bendigo,1414 High St
+VEND018,Albury Vehicle Co,AU,Albury,1515 Dean St
+VEND019,Launceston Motors,AU,Launceston,1616 Brisbane St
+VEND020,Mackay Auto Deals,AU,Mackay,1717 Victoria St
+VEND021,Rockhampton Cars,AU,Rockhampton,1818 William St
+VEND022,Bundaberg Auto,AU,Bundaberg,1919 Bourbong St
+VEND023,Hervey Bay Cars,AU,Hervey Bay,2020 Boat Harbour Dr
+VEND024,Gladstone Vehicles,AU,Gladstone,2121 Dawson Hwy
+VEND025,Sunshine Coast Autos,AU,Sunshine Coast,2222 Nicklin Way
+VEND026,Port Macquarie Cars,AU,Port Macquarie,2323 Hastings River Dr
+VEND027,Tamworth Auto Sales,AU,Tamworth,2424 Peel St
+VEND028,Dubbo Car Co,AU,Dubbo,2525 Macquarie St
+VEND029,Wagga Wagga Motors,AU,Wagga Wagga,2626 Baylis St
+VEND030,Orange Auto Traders,AU,Orange,2727 Mitchell Hwy

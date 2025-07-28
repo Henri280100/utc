@@ -1,0 +1,11 @@
+using from './AccountingDocumentHeader';
+using from './AccountingDocumentItem';
+using from './MaterialDocument';
+using from './MaterialInfoRecord';
+using from './PurchaseRequisition';
+using from './PurchaseRequisitionAccountAssginment';
+using from './PurchasingDocumentHeader';
+using from './PurchasingDocumentItem';
+using from './PurchasingInfoRecord';
+using from './SupplierInvoiceHeader';
+using from './SupplierInvoiceItem'

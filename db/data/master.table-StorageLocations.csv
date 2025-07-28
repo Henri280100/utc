@@ -1,0 +1,31 @@
+plant,storageLocation,storageLocationDescription
+1000,ST01,Sydney Warehouse
+1000,ST02,Sydney Lot A
+1001,ST03,Melbourne Warehouse
+1001,ST04,Melbourne Lot B
+1002,ST05,Brisbane Warehouse
+1002,ST06,Brisbane Lot C
+1003,ST07,Perth Warehouse
+1003,ST08,Perth Lot D
+1004,ST09,Adelaide Warehouse
+1004,ST10,Adelaide Lot E
+1005,ST11,Canberra Warehouse
+1005,ST12,Canberra Lot F
+1006,ST13,Hobart Warehouse
+1006,ST14,Hobart Lot G
+1007,ST15,Darwin Warehouse
+1007,ST16,Darwin Lot H
+1008,ST17,Gold Coast Warehouse
+1008,ST18,Gold Coast Lot I
+1009,ST19,Newcastle Warehouse
+1009,ST20,Newcastle Lot J
+1010,ST21,Wollongong Warehouse
+1010,ST22,Wollongong Lot K
+1011,ST23,Geelong Warehouse
+1011,ST24,Geelong Lot L
+1012,ST25,Townsville Warehouse
+1012,ST26,Townsville Lot M
+1013,ST27,Cairns Warehouse
+1013,ST28,Cairns Lot N
+1014,ST29,Toowoomba Warehouse
+1014,ST30,Toowoomba Lot O

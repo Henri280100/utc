@@ -1,0 +1,31 @@
+documentCategory,documentType,documentTypeDescription
+B,NB,Standard PR
+F,PO,Standard PO
+K,CT,Contract
+B,ZNB,Custom PR
+F,ZPO,Custom PO
+K,ZCT,Custom Contract
+B,PR01,Purchase Requisition Type 1
+B,PR02,Purchase Requisition Type 2
+F,PO01,Purchase Order Type 1
+F,PO02,Purchase Order Type 2
+K,CT01,Contract Type 1
+K,CT02,Contract Type 2
+B,PR03,Purchase Requisition Type 3
+B,PR04,Purchase Requisition Type 4
+F,PO03,Purchase Order Type 3
+F,PO04,Purchase Order Type 4
+K,CT03,Contract Type 3
+K,CT04,Contract Type 4
+B,PR05,Purchase Requisition Type 5
+B,PR06,Purchase Requisition Type 6
+F,PO05,Purchase Order Type 5
+F,PO06,Purchase Order Type 6
+K,CT05,Contract Type 5
+K,CT06,Contract Type 6
+B,PR07,Purchase Requisition Type 7
+B,PR08,Purchase Requisition Type 8
+F,PO07,Purchase Order Type 7
+F,PO08,Purchase Order Type 8
+K,CT07,Contract Type 7
+K,CT08,Contract Type 8
