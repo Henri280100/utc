@@ -13,21 +13,30 @@ using {
 entity PurchaseRequisition {
     key purchaseRequisition     : String(10);
     key purchaseReqnItem        : String(5);
-        Material                : Association to MaterialMaster;
+        @mandatory
+        material                : Association to MaterialMaster;
+        @mandatory
         plant                   : Association to Plant;
         storageLocation         : String(4);
+        @mandatory
         quantity                : Decimal(13, 3);
         baseUnit                : String(3);
+        @mandatory
         deliveryDate            : Date;
         requisitioner           : String(12);
         releaseStatus           : String(8);
+        @mandatory
         PurchasingGroup         : Association to PurchasingGroups;
         PurchaseRequisitionType : String(4);
         requisitionDate         : Date;
         createdByUser           : String @cds.on.insert: $user;
-        accountAssignments      : Composition of many PurchaseRequisitionAccountAssignment {
-                                      purchaseRequisition, purchaseReqnItem
-                                  };
+        accountAssignment       : Composition of many PurchaseRequisitionAccountAssignment
+                                      on  accountAssignment.purchaseRequisition = $self.purchaseRequisition
+                                      and accountAssignment.purchaseReqnItem    = $self.purchaseReqnItem;
         purchasingInfoRecords   : Association to many PurchasingInfoRecord
-                                      on purchasingInfoRecords.material = Material;
+                                      on purchasingInfoRecords.material = $self.material;
+
+
+
+                                      
 }

@@ -9,15 +9,18 @@ using {
 } from '../../schema';
 
 entity PurchasingDocumentHeader {
-    key purchaseOrder      : String(10);
-        documentCategory   : String(1);
-        purchaseOrderType  : String(4);
-        purchaseOrderItems : Composition of many PurchasingDocumentItem {
-                                 purchaseOrder
-                             };
-        supplier           : Association to VendorMaster {supplier};
-        purchasingGroup    : Association to PurchasingGroups {purchasingGroup};
-        documentDate       : Date;
-        currency           : Currency;
-        paymentTerms       : String(4);
+    key purchaseOrder          : String(10);
+        documentCategory       : String(1);
+        purchaseOrderType      : String(4);
+        purchasingDocumentItem : Composition of many PurchasingDocumentItem
+                                     on purchasingDocumentItem.purchaseOrder = purchaseOrder;
+        supplier               : Association to VendorMaster {
+                                     supplier
+                                 };
+        purchasingGroup        : Association to PurchasingGroups {
+                                     purchasingGroup
+                                 };
+        documentDate           : Date;
+        currency               : Currency;
+        paymentTerms           : String(4);
 }

@@ -20,10 +20,12 @@
   "scripts": {
     "start": "cds-serve",
     "watch-purchasing-requisition": "cds watch --open purchasing-requisition/webapp/index.html?sap-ui-xx-viewCache=false",
-    "watch-purchase-requisition": "cds watch --open purchase-requisition/webapp/index.html?sap-ui-xx-viewCache=false"
+    "watch-purchase-requisition": "cds watch --open purchase-requisition/webapp/index.html?sap-ui-xx-viewCache=false",
+    "watch-purchase-order": "cds watch --open purchase-order/webapp/index.html?sap-ui-xx-viewCache=false"
   },
   "cds": {},
   "sapux": [
-    "app/purchase-requisition"
+    "app/purchase-requisition",
+    "app/purchase-order"
   ]
 }

@@ -15,8 +15,13 @@ entity MaterialMaster {
         baseUnit              : String(3);
         materialGroup         : Association to MaterialGroups;
         creationDate          : Date;
-        materialDescriptions  : Composition of many MaterialDescriptions {material};
-        plantData             : Composition of many MaterialPlantData {material};
-        purchasingInfoRecords : Composition of many PurchasingInfoRecord {material};
+        materialDescriptions  : Composition of many MaterialDescriptions
+                                    on materialDescriptions.material = $self.material;
+        plantData             : Composition of many MaterialPlantData {
+                                    material
+                                };
+        // purchasingInfoRecords : Composition of many PurchasingInfoRecord {
+        //                             material
+        //                         };
 
 }

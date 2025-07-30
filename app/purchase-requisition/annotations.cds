@@ -1,23 +1,64 @@
 using PurchaseRequisitionsService as service from '../../srv/purchase-requisition-service';
 
 annotate service.PurchaseRequisition with @(
-    UI.FieldGroup #GeneratedGroup: {
+    UI.FieldGroup #AccountAssignment: {
         $Type: 'UI.FieldGroupType',
         Data : [
             {
                 $Type: 'UI.DataField',
-                Label: 'purchaseRequisition',
+                Value: accountAssignment.acctAssignment,
+                Label: 'AcctAssignment',
+            },
+            {
+                $Type: 'UI.DataField',
+                Value: accountAssignment.acctAssignmentCategory,
+                Label: 'AcctAssignmentCategory',
+            },
+            {
+                $Type: 'UI.DataField',
+                Value: accountAssignment.costCenter,
+                Label: 'CostCenter',
+            },
+            {
+                $Type: 'UI.DataField',
+                Value: accountAssignment.glAccount,
+                Label: 'GLAccount',
+            },
+            {
+                $Type: 'UI.DataField',
+                Value: accountAssignment.order,
+                Label: 'Order',
+            },
+            {
+                $Type: 'UI.DataField',
+                Value: accountAssignment.purchaseReqnItem,
+                Label: 'PurchaseReqnItem',
+            },
+            {
+                $Type: 'UI.DataField',
+                Value: accountAssignment.purchaseRequisition,
+                Label: 'PurchaseRequisition',
+            },
+        ],
+    },
+
+    UI.FieldGroup #GeneratedGroup   : {
+        $Type: 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type: 'UI.DataField',
+                Label: '{i18n>PurchaseRequisition}',
                 Value: purchaseRequisition,
             },
             {
                 $Type: 'UI.DataField',
-                Label: 'purchaseReqnItem',
+                Label: '{i18n>Item}',
                 Value: purchaseReqnItem,
             },
             {
                 $Type: 'UI.DataField',
                 Label: '{i18n>Material}',
-                Value: Material_material,
+                Value: material_material,
             },
             {
                 $Type: 'UI.DataField',
@@ -56,27 +97,28 @@ annotate service.PurchaseRequisition with @(
             },
             {
                 $Type: 'UI.DataField',
-                Label: 'PurchasingGroup_purchasingGroup',
+                Label: '{i18n>PurchasingGroup}',
                 Value: PurchasingGroup_purchasingGroup,
             },
             {
                 $Type: 'UI.DataField',
-                Label: 'PurchaseRequisitionType',
+                Label: '{i18n>PurchaseRequisitionType}',
                 Value: PurchaseRequisitionType,
             },
             {
                 $Type: 'UI.DataField',
-                Label: 'requisitionDate',
+                Label: '{i18n>RequisitionDate}',
                 Value: requisitionDate,
             },
             {
                 $Type: 'UI.DataField',
-                Label: 'createdByUserIn',
+                Label: '{i18n>CreatedByUser}',
                 Value: createdByUser,
             },
         ],
     },
-    UI.Facets                    : [
+    UI.Facets                       : [
+
         {
             $Type : 'UI.ReferenceFacet',
             ID    : 'GeneratedFacet1',
@@ -86,7 +128,7 @@ annotate service.PurchaseRequisition with @(
         {
             $Type : 'UI.ReferenceFacet',
             Label : 'Account Assignment',
-            Target: 'accountAssignments/@UI.LineItem#AccountAssignments'
+            Target: 'accountAssignment/@UI.LineItem#AccountAssignment'
         },
         // Material Details (MARA, MAKT)
         {
@@ -98,10 +140,11 @@ annotate service.PurchaseRequisition with @(
             $Type : 'UI.ReferenceFacet',
             Label : 'Supplier Information',
             Target: 'purchasingInfoRecords/@UI.LineItem#SupplierInfo'
-        }
+        },
+
     ],
 
-    UI.LineItem                  : [
+    UI.LineItem                     : [
         {
             $Type: 'UI.DataField',
             Label: '{i18n>PurchaseRequisition}',
@@ -110,11 +153,11 @@ annotate service.PurchaseRequisition with @(
         {
             $Type: 'UI.DataField',
             Label: '{i18n>Material}',
-            Value: Material_material,
+            Value: material_material,
         },
         {
             $Type: 'UI.DataField',
-            Value: Material.materialDescriptions_material,
+            Value: material.materialDescriptions.materialDescriptions,
             Label: '{i18n>MaterialDescription1}',
         },
         {
@@ -136,26 +179,31 @@ annotate service.PurchaseRequisition with @(
             $Type: 'UI.DataField',
             Value: releaseStatus,
         },
+        {
+            $Type: 'UI.DataField',
+            Value: requisitionDate,
+        },
     ],
-    UI.SelectionFields           : [
-        Material_material,
+    UI.SelectionFields              : [
+        material_material,
         plant_plant,
         PurchasingGroup_purchasingGroup,
         releaseStatus,
         requisitionDate,
     ],
+
 );
 
 
 annotate service.PurchaseRequisition with {
-    Material @(
+    material @(
         Common.ValueList               : {
             $Type         : 'Common.ValueListType',
             CollectionPath: 'MaterialMaster',
             Parameters    : [
                 {
                     $Type            : 'Common.ValueListParameterInOut',
-                    LocalDataProperty: Material_material,
+                    LocalDataProperty: material_material,
                     ValueListProperty: 'material',
                 },
                 {
@@ -232,7 +280,24 @@ annotate service.PurchaseRequisition with {
             ],
         },
         Common.Label    : '{i18n>PurchasingGroup}',
-    )
+    );
+    releaseStatus   @(
+        Common.Text                    : releaseStatus,
+        TextArrangement                : #TextOnly,
+        Common.ValueListWithFixedValues: true,
+        Common.ValueList               : {
+            CollectionPath: 'PurchaseRequisition',
+            Parameters    : [{
+                $Type            : 'Common.ValueListParameterInOut',
+                LocalDataProperty: 'releaseStatus',
+                ValueListProperty: 'releaseStatus'
+            }]
+        }
+    );
+
+
+    // Hidden technical fields
+    releaseStatus   @UI.Hidden: true;
 };
 
 annotate service.PurchaseRequisition with {
@@ -250,12 +315,12 @@ annotate service.MaterialMaster with {
             CollectionPath: 'MaterialDescriptions',
             Parameters    : [{
                 $Type            : 'Common.ValueListParameterInOut',
-                LocalDataProperty: materialDescriptions,
+                LocalDataProperty: materialDescriptions.materialDescriptions,
                 ValueListProperty: 'materialDescriptions',
             }, ],
         },
         Common.ValueListWithFixedValues: true,
-        Common.Text                    : materialDescriptions_material,
+        Common.Text                    : material,
         Common.Text.@UI.TextArrangement: #TextFirst,
     )
 };
@@ -280,7 +345,7 @@ annotate service.PurchaseRequisition with @(UI: {
         },
         Description   : {
             $Type: 'UI.DataField',
-            Value: Material.materialDescriptions
+            Value: material.materialDescriptions.materialDescriptions
         }
     },
     // Header Facets
@@ -288,7 +353,9 @@ annotate service.PurchaseRequisition with @(UI: {
         $Type : 'UI.ReferenceFacet',
         Target: '@UI.FieldGroup#HeaderDetails',
         Label : 'Header Details'
-    }],
+    }
+
+    ],
     // Field Group for Header
     FieldGroup #HeaderDetails     : {Data: [
         {
@@ -298,7 +365,7 @@ annotate service.PurchaseRequisition with @(UI: {
         },
         {
             $Type: 'UI.DataField',
-            Value: Material.material,
+            Value: material.material,
             Label: 'Material'
         },
         {
@@ -327,7 +394,7 @@ annotate service.PurchaseRequisition with @(UI: {
         },
         {
             $Type: 'UI.DataField',
-            Value: Material.material,
+            Value: material.material,
             Label: 'Material'
         },
         {
@@ -380,34 +447,144 @@ annotate service.PurchaseRequisition with @(UI: {
     FieldGroup #MaterialDetails   : {Data: [
         {
             $Type: 'UI.DataField',
-            Value: Material.material,
+            Value: material.material,
             Label: 'Material'
         },
         {
             $Type: 'UI.DataField',
-            Value: Material.materialDescriptions.materialDescriptions,
+            Value: material.materialDescriptions.materialDescriptions,
             Label: 'Material Description'
         },
         {
             $Type: 'UI.DataField',
-            Value: Material.materialType,
+            Value: material.materialType,
             Label: 'Material Type'
         },
         {
             $Type: 'UI.DataField',
-            Value: Material.industrySector,
+            Value: material.industrySector,
             Label: 'Industry Sector'
         },
         {
             $Type: 'UI.DataField',
-            Value: Material.baseUnit,
+            Value: material.baseUnit,
             Label: 'Base Unit'
         }
-    ]}
+    ]},
+    Identification                : [
+        {
+            $Type: 'UI.DataField',
+            Value: purchaseRequisition,
+            Label: 'Purchase Requisition'
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: purchaseReqnItem,
+            Label: 'Item',
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: releaseStatus,
+            Label: 'Release Status'
+        },
+        {
+            $Type        : 'UI.DataFieldForAction',
+            Action       : 'PurchaseRequisitionsService.release',
+            Label        : 'Release',
+            Inline       : true,
+            Criticality  : #Positive,
+            ![@UI.Hidden]: {$edmJson: {$Eq: [
+                {$Path: 'releaseStatus'},
+                'OPEN'
+            ]}}
+        },
+        {
+            $Type        : 'UI.DataFieldForAction',
+            Action       : 'PurchaseRequisitionsService.approve',
+            Label        : 'Approve',
+            Inline       : true,
+            Criticality  : #Positive,
+            ![@UI.Hidden]: {$edmJson: {$Eq: [
+                {$Path: 'releaseStatus'},
+                'RELEASED'
+            ]}}
+        },
+        {
+            $Type        : 'UI.DataFieldForAction',
+            Action       : 'PurchaseRequisitionsService.reject',
+            Label        : 'Reject',
+            Inline       : false,
+            Criticality  : #Negative,
+            ![@UI.Hidden]: {$edmJson: {$Eq: [
+                {$Path: 'releaseStatus'},
+                'RELEASED'
+            ]}}
+        },
+        {
+            $Type        : 'UI.DataFieldForAction',
+            Action       : 'PurchaseRequisitionsService.cancel',
+            Label        : 'Cancel Item',
+            Inline       : true,
+            Criticality  : #Critical,
+        }
+    ]
+
 });
 
+// Action Side Effects and Parameters
+annotate PurchaseRequisitionsService.PurchaseRequisition with @(
+    Common.SideEffects #Approve: {
+        $Type           : 'Common.SideEffectsType',
+        SourceProperties: ['releaseStatus'],
+        TargetProperties: ['releaseStatus'],
+        TargetEntities  : ['accountAssignment']
+
+    },
+    Common.SideEffects #Reject : {
+        $Type           : 'Common.SideEffectsType',
+        SourceProperties: ['releaseStatus'],
+        TargetProperties: ['releaseStatus'],
+        TargetEntities  : ['accountAssignment']
+    },
+    Common.SideEffects #Edit   : {
+        $Type           : 'Common.SideEffectsType',
+        SourceProperties: [
+            'releaseStatus',
+            'quantity',
+            'deliveryDate'
+        ],
+        TargetProperties: [
+            'releaseStatus',
+            'quantity',
+            'deliveryDate'
+        ],
+        TargetEntities  : ['accountAssignment']
+    },
+    Common.SideEffects #Release: {
+        $Type           : 'Common.SideEffectsType',
+        SourceProperties: ['releaseStatus'],
+        TargetProperties: ['releaseStatus'],
+        TargetEntities  : ['accountAssignment']
+    },
+    Common.SideEffects #Cancel : {
+        $Type           : 'Common.SideEffectsType',
+        SourceProperties: ['releaseStatus'],
+        TargetProperties: ['releaseStatus'],
+        TargetEntities  : ['accountAssignment']
+    }
+);
+
+annotate PurchaseRequisitionsService.PurchaseRequisition actions {
+    approve @(title: 'Approve');
+    reject  @(title: 'Reject');
+    edit    @(title: 'Edit');
+    release @(title: 'Release');
+    cancel  @(title: 'Cancel');
+};
+
+
 // LineItem for Account Assignments (EBKN)
-annotate service.PurchaseRequisitionAccountAssignment with @(UI: {LineItem #AccountAssignments: [
+annotate service.PurchaseRequisitionAccountAssignment with @(UI: {LineItem #AccountAssignment: [
     {
         $Type: 'UI.DataField',
         Value: purchaseRequisition,
@@ -464,14 +641,24 @@ annotate service.PurchasingInfoRecord with @(UI: {LineItem #SupplierInfo: [
     },
     {
         $Type: 'UI.DataField',
-        Value: supplier.country,
+        Value: supplier.country_code,
         Label: 'Country'
     },
     {
         $Type: 'UI.DataField',
         Value: supplier.city,
         Label: 'City'
-    }
+    },
+    {
+        $Type : 'UI.DataField',
+        Value : purchasingOrgData.netPrice,
+        Label : '{i18n>NetPrice}',
+    },
+    {
+        $Type : 'UI.DataField',
+        Value : purchasingOrgData.priceUnit,
+        Label : '{i18n>PriceUnit}',
+    },
 ]});
 
 

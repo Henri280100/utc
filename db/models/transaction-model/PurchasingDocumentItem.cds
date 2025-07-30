@@ -10,9 +10,7 @@ using {
 entity PurchasingDocumentItem {
     key purchaseOrder       : String(10);
     key purchaseOrderItem   : String(5);
-        material            : Association to MaterialMaster {
-                                  material
-                              };
+        material            : Association to MaterialMaster {material};
         plant               : Association to Plant {
                                   plant
                               };

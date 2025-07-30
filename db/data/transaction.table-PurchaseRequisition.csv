@@ -1,4 +1,4 @@
-purchaseRequisition,purchaseReqnItem,Material_material,plant_plant,storageLocation,quantity,baseUnit,deliveryDate,requisitioner,releaseStatus,PurchasingGroup_purchasingGroup,PurchaseRequisitionType,requisitionDate,createdByUser
+purchaseRequisition,purchaseReqnItem,material_material,plant_plant,storageLocation,quantity,baseUnit,deliveryDate,requisitioner,releaseStatus,PurchasingGroup_purchasingGroup,purchaseRequisitionType,requisitionDate,createdByUser
 1000000001,00010,MAT001,1000,ST01,5.000,EA,2025-08-01,JOHNDOE,REL,P01,NB,2025-07-20,JANEDOE
 1000000002,00010,MAT002,1001,ST03,3.000,EA,2025-08-02,SMITHJ,REL,P02,NB,2025-07-21,JANEDOE
 1000000003,00010,MAT003,1002,ST05,4.000,EA,2025-08-03,ADAMSK,REL,P03,NB,2025-07-22,JANEDOE
