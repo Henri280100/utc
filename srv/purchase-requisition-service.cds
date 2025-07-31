@@ -10,10 +10,7 @@ service PurchaseRequisitionsService {
             // Bound Actions (instance-specific for line items)
             action approve()                    returns PurchaseRequisition;
             action reject(reason : String(500)) returns PurchaseRequisition;
-            action edit()                       returns PurchaseRequisition;
-            action release()                    returns PurchaseRequisition;
             action cancel()                     returns PurchaseRequisition;
-
         };
 
     entity PurchaseRequisitionAccountAssignment as projection on tt.PurchaseRequisitionAccountAssignment;

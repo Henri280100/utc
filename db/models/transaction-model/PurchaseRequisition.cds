@@ -6,25 +6,30 @@ using {
     master.table.MaterialMaster,
     master.table.Plant,
     transaction.table.PurchaseRequisitionAccountAssignment,
-    transaction.table.PurchasingInfoRecord,
+    transaction.table.PurchasingInfoRecord
 } from '../../schema';
 
 
 entity PurchaseRequisition {
     key purchaseRequisition     : String(10);
     key purchaseReqnItem        : String(5);
+
         @mandatory
         material                : Association to MaterialMaster;
+
         @mandatory
         plant                   : Association to Plant;
         storageLocation         : String(4);
+
         @mandatory
         quantity                : Decimal(13, 3);
         baseUnit                : String(3);
+
         @mandatory
         deliveryDate            : Date;
         requisitioner           : String(12);
         releaseStatus           : String(8);
+
         @mandatory
         PurchasingGroup         : Association to PurchasingGroups;
         PurchaseRequisitionType : String(4);
@@ -35,8 +40,4 @@ entity PurchaseRequisition {
                                       and accountAssignment.purchaseReqnItem    = $self.purchaseReqnItem;
         purchasingInfoRecords   : Association to many PurchasingInfoRecord
                                       on purchasingInfoRecords.material = $self.material;
-
-
-
-                                      
 }

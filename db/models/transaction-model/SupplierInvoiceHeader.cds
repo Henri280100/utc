@@ -10,9 +10,8 @@ using {
 entity SupplierInvoiceHeader {
     key supplierInvoice     : String(10);
     key fiscalYear          : String(4);
-        supplierInvoiceItem : Composition of many SupplierInvoiceItem {
-                                  supplierInvoice
-                              };
+        supplierInvoiceItem : Composition of many SupplierInvoiceItem
+                                  on supplierInvoiceItem.supplierInvoice = $self.supplierInvoice;
         supplier            : Association to VendorMaster;
         documentDate        : Date;
         grossAmount         : Decimal(13, 2);

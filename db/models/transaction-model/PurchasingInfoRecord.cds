@@ -4,7 +4,7 @@ namespace transaction.table;
 using {
     master.table.MaterialMaster,
     master.table.VendorMaster,
-    master.table.PurchasingOrganizationData
+    master.table.PurchasingOrganizationData,
 } from '../../schema';
 
 entity PurchasingInfoRecord {

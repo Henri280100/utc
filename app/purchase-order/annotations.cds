@@ -2,28 +2,9 @@ using PurchaseOrderService as service from '../../srv/purchase-order-service';
 using from '@sap/cds/common';
 
 annotate service.PurchaseDocumentHeader with @(
-    UI.FieldGroup #PurchaseOrderItems: {
-        $Type: 'UI.FieldGroupType',
-        Data : [
-            {
-                $Type : 'UI.DataField',
-                Value : purchasingDocumentItem.purchaseOrderItem,
-                Label : 'purchaseOrderItem',
-            },
-            {
-                $Type : 'UI.DataField',
-                Value : purchaseOrder,
-                Label : 'purchaseOrder',
-            },
-            {
-                $Type : 'UI.DataField',
-                Value : purchasingDocumentItem.material.material,
-                Label : 'material',
-            },
-        ],
-    },
 
-    UI.FieldGroup #GeneratedGroup    : {
+
+    UI.FieldGroup #GeneratedGroup     : {
         $Type: 'UI.FieldGroupType',
         Data : [
             {
@@ -73,7 +54,7 @@ annotate service.PurchaseDocumentHeader with @(
             },
         ],
     },
-    UI.Facets                        : [
+    UI.Facets                         : [
         {
             $Type : 'UI.ReferenceFacet',
             ID    : 'GeneratedFacet1',
@@ -83,29 +64,30 @@ annotate service.PurchaseDocumentHeader with @(
         {
             $Type : 'UI.ReferenceFacet',
             Label : 'Purchasing Document Item',
-            Target: '@UI.FieldGroup#PurchaseOrderItems',
+            ID : 'PurchasingDocumentItem',
+            Target : 'purchasingDocumentItem/@UI.LineItem#PurchasingDocumentItem',
         },
         {
             $Type : 'UI.ReferenceFacet',
             Label : '{i18n>SupplierDetails}',
-            ID : 'i18nSupplierDetails',
-            Target : '@UI.FieldGroup#i18nSupplierDetails',
+            ID    : 'i18nSupplierDetails',
+            Target: '@UI.FieldGroup#i18nSupplierDetails',
         },
         {
             $Type : 'UI.ReferenceFacet',
-            Label : '{i18n>PrReference}',
-            ID : 'PRReference',
-            Target : '@UI.FieldGroup#PRReference',
-        },
-        {
-            $Type : 'UI.ReferenceFacet',
-            Label : '{i18n>Pricing}',
+            Label : 'Pricing',
             ID : 'Pricing',
-            Target : '@UI.FieldGroup#Pricing',
+            Target : 'purchasingDocumentItem/@UI.LineItem#Pricing',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : 'PR Reference',
+            ID : 'PRReference',
+            Target : 'purchasingDocumentItem/@UI.LineItem#PRReference',
         },
 
     ],
-    UI.LineItem                      : [
+    UI.LineItem                       : [
         {
             $Type: 'UI.DataField',
             Label: '{i18n>PurchaseOrder}',
@@ -132,51 +114,42 @@ annotate service.PurchaseDocumentHeader with @(
             Label: '{i18n>Currency}',
         },
     ],
-    UI.SelectionFields               : [
+    UI.SelectionFields                : [
         supplier_supplier,
         purchasingGroup_purchasingGroup,
         documentDate,
         purchaseOrderType,
     ],
-    UI.FieldGroup #i18nSupplierDetails : {
-        $Type : 'UI.FieldGroupType',
+    UI.FieldGroup #i18nSupplierDetails: {
+        $Type: 'UI.FieldGroupType',
         Data : [
             {
-                $Type : 'UI.DataField',
-                Value : supplier.supplier,
-                Label : '{i18n>Supplier}',
+                $Type: 'UI.DataField',
+                Value: supplier.supplier,
+                Label: '{i18n>Supplier}',
             },
             {
-                $Type : 'UI.DataField',
-                Value : supplier.supplierName,
-                Label : '{i18n>SupplierName}',
+                $Type: 'UI.DataField',
+                Value: supplier.supplierName,
+                Label: '{i18n>SupplierName}',
             },
             {
-                $Type : 'UI.DataField',
-                Value : supplier.country_code,
+                $Type: 'UI.DataField',
+                Value: supplier.country_code,
             },
             {
-                $Type : 'UI.DataField',
-                Value : supplier.city,
-                Label : '{i18n>City}',
+                $Type: 'UI.DataField',
+                Value: supplier.city,
+                Label: '{i18n>City}',
             },
             {
-                $Type : 'UI.DataField',
-                Value : supplier.street,
-                Label : '{i18n>Street}',
+                $Type: 'UI.DataField',
+                Value: supplier.street,
+                Label: '{i18n>Street}',
             },
         ],
     },
-    UI.FieldGroup #PRReference : {
-        $Type : 'UI.FieldGroupType',
-        Data : [
-        ],
-    },
-    UI.FieldGroup #Pricing : {
-        $Type : 'UI.FieldGroupType',
-        Data : [
-        ],
-    },
+
 );
 
 
@@ -268,3 +241,123 @@ annotate service.PurchaseDocumentHeader with @(UI.PresentationVariant: {
     Visualizations: ['@UI.LineItem',
     ],
 });
+annotate service.PurchaseDocumentItem with @(
+    UI.LineItem #PurchasingDocumentItem : [
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseOrder,
+            Label : '{i18n>PurchaseOrder}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseOrderItem,
+            Label : '{i18n>OrderItem}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : quantity,
+            Label : '{i18n>Quantity}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : storageLocation,
+            Label : '{i18n>StorageLocation}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : baseUnit,
+            Label : '{i18n>BaseUnit}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : netPrice,
+            Label : '{i18n>NetPrice}',
+        },
+    ],
+    UI.LineItem #Pricing : [
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchasingInfoRecords.purchasingOrgData.netPrice,
+            Label : '{i18n>NetPrice}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchasingInfoRecords.purchasingOrgData.priceUnit,
+            Label : '{i18n>PriceUnit}',
+        },
+    ],
+    UI.LineItem #PRReference : [
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchaseRequisition,
+            Label : '{i18n>PurchaseRequisition}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchaseReqnItem,
+            Label : '{i18n>RequisitionItem}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.baseUnit,
+            Label : '{i18n>BaseUnit}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.createdByUser,
+            Label : '{i18n>CreatedByUser}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.deliveryDate,
+            Label : '{i18n>DeliveryDate}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.PurchaseRequisitionType,
+            Label : '{i18n>RequisitionType}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.quantity,
+            Label : '{i18n>Quantity}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.releaseStatus,
+            Label : '{i18n>ReleaseStatus}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.requisitionDate,
+            Label : '{i18n>RequisitionDate}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.requisitioner,
+            Label : '{i18n>Requisitioner}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.storageLocation,
+            Label : '{i18n>StorageLocation}',
+        },
+    ],
+);
+
+annotate service.PurchasingOrganizationData with {
+    netPrice @(
+        Common.ValueList : {
+            $Type : 'Common.ValueListType',
+            CollectionPath : 'PurchasingOrganizationData',
+            Parameters : [
+                {
+                    $Type : 'Common.ValueListParameterInOut',
+                    LocalDataProperty : netPrice,
+                    ValueListProperty : 'netPrice',
+                },
+            ],
+        },
+        Common.ValueListWithFixedValues : true,
+)};
+

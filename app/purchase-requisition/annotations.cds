@@ -489,17 +489,6 @@ annotate service.PurchaseRequisition with @(UI: {
         },
         {
             $Type        : 'UI.DataFieldForAction',
-            Action       : 'PurchaseRequisitionsService.release',
-            Label        : 'Release',
-            Inline       : true,
-            Criticality  : #Positive,
-            ![@UI.Hidden]: {$edmJson: {$Eq: [
-                {$Path: 'releaseStatus'},
-                'OPEN'
-            ]}}
-        },
-        {
-            $Type        : 'UI.DataFieldForAction',
             Action       : 'PurchaseRequisitionsService.approve',
             Label        : 'Approve',
             Inline       : true,
@@ -546,26 +535,26 @@ annotate PurchaseRequisitionsService.PurchaseRequisition with @(
         TargetProperties: ['releaseStatus'],
         TargetEntities  : ['accountAssignment']
     },
-    Common.SideEffects #Edit   : {
-        $Type           : 'Common.SideEffectsType',
-        SourceProperties: [
-            'releaseStatus',
-            'quantity',
-            'deliveryDate'
-        ],
-        TargetProperties: [
-            'releaseStatus',
-            'quantity',
-            'deliveryDate'
-        ],
-        TargetEntities  : ['accountAssignment']
-    },
-    Common.SideEffects #Release: {
-        $Type           : 'Common.SideEffectsType',
-        SourceProperties: ['releaseStatus'],
-        TargetProperties: ['releaseStatus'],
-        TargetEntities  : ['accountAssignment']
-    },
+    // Common.SideEffects #Edit   : {
+    //     $Type           : 'Common.SideEffectsType',
+    //     SourceProperties: [
+    //         'releaseStatus',
+    //         'quantity',
+    //         'deliveryDate'
+    //     ],
+    //     TargetProperties: [
+    //         'releaseStatus',
+    //         'quantity',
+    //         'deliveryDate'
+    //     ],
+    //     TargetEntities  : ['accountAssignment']
+    // },
+    // Common.SideEffects #Release: {
+    //     $Type           : 'Common.SideEffectsType',
+    //     SourceProperties: ['releaseStatus'],
+    //     TargetProperties: ['releaseStatus'],
+    //     TargetEntities  : ['accountAssignment']
+    // },
     Common.SideEffects #Cancel : {
         $Type           : 'Common.SideEffectsType',
         SourceProperties: ['releaseStatus'],
@@ -577,8 +566,6 @@ annotate PurchaseRequisitionsService.PurchaseRequisition with @(
 annotate PurchaseRequisitionsService.PurchaseRequisition actions {
     approve @(title: 'Approve');
     reject  @(title: 'Reject');
-    edit    @(title: 'Edit');
-    release @(title: 'Release');
     cancel  @(title: 'Cancel');
 };
 
