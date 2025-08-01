@@ -22,6 +22,6 @@ entity PurchasingDocumentItem {
         netPrice            : Decimal(11, 2);
         // Association using the explicit fields
         purchaseRequisition : Association to PurchaseRequisition {
-                          purchaseRequisition
-                      };
+                                  purchaseRequisition
+                              };
 }

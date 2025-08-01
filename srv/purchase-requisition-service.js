@@ -320,7 +320,7 @@ module.exports = async (srv) => {
   });
 
   // createPurchaseRequisitionItem action
-  srv.on("createPurchaseRequisitionItem", async (req) => {
+  srv.on("CREATE", async (req) => {
     const tx = cds.transaction(req);
     const {
       purchaseRequisition,

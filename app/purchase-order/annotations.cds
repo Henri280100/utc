@@ -83,7 +83,7 @@ annotate service.PurchaseDocumentHeader with @(
             $Type : 'UI.ReferenceFacet',
             Label : 'PR Reference',
             ID : 'PRReference',
-            Target : 'purchasingDocumentItem/@UI.LineItem#PRReference',
+            Target : 'purchasingDocumentItem/@UI.LineItem#PRReference1',
         },
 
     ],
@@ -275,16 +275,7 @@ annotate service.PurchaseDocumentItem with @(
         },
     ],
     UI.LineItem #Pricing : [
-        {
-            $Type : 'UI.DataField',
-            Value : purchaseRequisition.purchasingInfoRecords.purchasingOrgData.netPrice,
-            Label : '{i18n>NetPrice}',
-        },
-        {
-            $Type : 'UI.DataField',
-            Value : purchaseRequisition.purchasingInfoRecords.purchasingOrgData.priceUnit,
-            Label : '{i18n>PriceUnit}',
-        },
+        
     ],
     UI.LineItem #PRReference : [
         {
@@ -342,6 +333,8 @@ annotate service.PurchaseDocumentItem with @(
             Value : purchaseRequisition.storageLocation,
             Label : '{i18n>StorageLocation}',
         },
+    ],
+    UI.LineItem #PRReference1 : [
     ],
 );
 

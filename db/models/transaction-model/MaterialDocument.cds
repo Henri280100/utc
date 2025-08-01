@@ -3,7 +3,6 @@ namespace transaction.table;
 using {
     master.table.MaterialMaster,
     master.table.Plant,
-    transaction.table.PurchasingDocumentHeader,
     transaction.table.PurchasingDocumentItem
 } from '../../schema';
 

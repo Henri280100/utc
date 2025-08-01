@@ -5,8 +5,7 @@ using {Currency} from '@sap/cds/common';
 using {
     master.table.VendorMaster,
     master.table.PurchasingGroups,
-    transaction.table.PurchasingDocumentItem,
-    transaction.table.PurchaseRequisition,
+    transaction.table.PurchasingDocumentItem
 } from '../../schema';
 
 entity PurchasingDocumentHeader {
@@ -29,7 +28,4 @@ entity PurchasingDocumentHeader {
         @mandatory
         currency               : Currency;
         paymentTerms           : String(4);
-        purchaseRequisition    : Association to PurchaseRequisition {
-                                     purchaseRequisition
-                                 };
 }
