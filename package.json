@@ -22,12 +22,16 @@
     "watch-purchasing-requisition": "cds watch --open purchasing-requisition/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-purchase-requisition": "cds watch --open purchase-requisition/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-purchase-order": "cds watch --open purchase-order/webapp/index.html?sap-ui-xx-viewCache=false",
-    "watch-good-receipt": "cds watch --open good-receipt/webapp/index.html?sap-ui-xx-viewCache=false"
+    "watch-good-receipt": "cds watch --open good-receipt/webapp/index.html?sap-ui-xx-viewCache=false",
+    "watch-supplier-invoice-processing": "cds watch --open supplier-invoice-processing/webapp/index.html?sap-ui-xx-viewCache=false",
+    "watch-purchasing-info-records": "cds watch --open purchasing-info-records/webapp/index.html?sap-ui-xx-viewCache=false"
   },
   "cds": {},
   "sapux": [
     "app/purchase-requisition",
     "app/purchase-order",
-    "app/good-receipt"
+    "app/good-receipt",
+    "app/supplier-invoice-processing",
+    "app/purchasing-info-records"
   ]
 }
