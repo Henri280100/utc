@@ -52,6 +52,11 @@ annotate service.PurchaseDocumentHeader with @(
                 Label: '{i18n>PaymentTerms}',
                 Value: paymentTerms,
             },
+            {
+                $Type : 'UI.DataField',
+                Value : purchasingDocumentItem.quantity,
+                Label : '{i18n>Quantity}',
+            },
         ],
     },
     UI.Facets                         : [
@@ -75,15 +80,15 @@ annotate service.PurchaseDocumentHeader with @(
         },
         {
             $Type : 'UI.ReferenceFacet',
-            Label : 'Pricing',
-            ID : 'Pricing',
-            Target : 'purchasingDocumentItem/@UI.LineItem#Pricing',
+            Label : '{i18n>Pricing}',
+            ID : 'i18nPricing',
+            Target : 'purchasingDocumentItem/@UI.LineItem#i18nPricing',
         },
         {
             $Type : 'UI.ReferenceFacet',
-            Label : 'PR Reference',
-            ID : 'PRReference',
-            Target : 'purchasingDocumentItem/@UI.LineItem#PRReference1',
+            Label : '{i18n>PrReference}',
+            ID : 'i18nPrReference',
+            Target : 'purchasingDocumentItem/@UI.LineItem#i18nPrReference',
         },
 
     ],
@@ -335,6 +340,70 @@ annotate service.PurchaseDocumentItem with @(
         },
     ],
     UI.LineItem #PRReference1 : [
+    ],
+    UI.LineItem #i18nPricing : [
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchasingInfoRecords.purchasingOrgData.netPrice,
+            Label : 'netPrice',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchasingInfoRecords.purchasingOrgData.priceUnit,
+            Label : 'priceUnit',
+        },
+    ],
+    UI.LineItem #i18nPrReference : [
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.baseUnit,
+            Label : '{i18n>BaseUnit}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.createdByUser,
+            Label : '{i18n>CreatedByUser}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.deliveryDate,
+            Label : '{i18n>DeliveryDate}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchaseRequisition,
+            Label : '{i18n>Pr}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.purchaseReqnItem,
+            Label : '{i18n>PrItem}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.PurchaseRequisitionType,
+            Label : '{i18n>PrType}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.releaseStatus,
+            Label : '{i18n>ReleaseStatus}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.requisitionDate,
+            Label : '{i18n>RequisitionDate}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.requisitioner,
+            Label : '{i18n>Requisitioner}',
+        },
+        {
+            $Type : 'UI.DataField',
+            Value : purchaseRequisition.storageLocation,
+            Label : '{i18n>StorageLocation}',
+        },
     ],
 );
 
