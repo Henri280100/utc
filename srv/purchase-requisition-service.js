@@ -472,7 +472,7 @@ module.exports = async (srv) => {
       .where({ purchaseRequisition, purchaseReqnItem });
   });
 
-  srv.before("reject", PurchaseRequisition, async (req) => {
+  srv.before("rejectOrder", PurchaseRequisition, async (req) => {
     const { purchaseRequisition, purchaseReqnItem } = req.params[0];
     const pr = await SELECT.one
       .from(PurchaseRequisition)
@@ -492,7 +492,7 @@ module.exports = async (srv) => {
     }
   });
 
-  srv.on("reject", PurchaseRequisition, async (req) => {
+  srv.on("rejectOrder", PurchaseRequisition, async (req) => {
     const { purchaseRequisition, purchaseReqnItem } = req.params[0];
     const { reason } = req.data;
     await UPDATE(PurchaseRequisition)

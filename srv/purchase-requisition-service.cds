@@ -9,7 +9,7 @@ service PurchaseRequisitionsService {
         actions {
             // Bound Actions (instance-specific for line items)
             action approve()                    returns PurchaseRequisition;
-            action reject(reason : String(500)) returns PurchaseRequisition;
+            action rejectOrder(reason : String(500)) returns PurchaseRequisition;
             action cancel()                     returns PurchaseRequisition;
         };
 

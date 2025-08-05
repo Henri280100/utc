@@ -500,7 +500,7 @@ annotate service.PurchaseRequisition with @(UI: {
         },
         {
             $Type        : 'UI.DataFieldForAction',
-            Action       : 'PurchaseRequisitionsService.reject',
+            Action       : 'PurchaseRequisitionsService.rejectOrder',
             Label        : 'Reject',
             Inline       : false,
             Criticality  : #Negative,
@@ -565,7 +565,7 @@ annotate PurchaseRequisitionsService.PurchaseRequisition with @(
 
 annotate PurchaseRequisitionsService.PurchaseRequisition actions {
     approve @(title: 'Approve');
-    reject  @(title: 'Reject');
+    rejectOrder  @(title: 'Reject');
     cancel  @(title: 'Cancel');
 };
 
