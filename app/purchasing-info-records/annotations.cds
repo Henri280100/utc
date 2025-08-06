@@ -55,16 +55,6 @@ annotate service.PurchasingInfoRecord with @(
             },
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.netPrice,
-                Label : '{i18n>NetPrice}',
-            },
-            {
-                $Type : 'UI.DataField',
-                Value : purchasingOrgData.priceUnit,
-                Label : '{i18n>PriceUnit}',
-            },
-            {
-                $Type : 'UI.DataField',
                 Value : supplier.supplier,
                 Label : '{i18n>Supplier}',
             },
@@ -95,9 +85,21 @@ annotate service.PurchasingInfoRecord with @(
         },
         {
             $Type : 'UI.ReferenceFacet',
-            Label : '{i18n>Coditions}',
-            ID : 'i18nCoditions',
-            Target : '@UI.FieldGroup#i18nCoditions',
+            Label : '{i18n>Conditions}',
+            ID : 'i18nConditions',
+            Target : '@UI.FieldGroup#i18nConditions1',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : '{i18n>MaterialDetails}',
+            ID : 'i18nMaterialDetails',
+            Target : '@UI.FieldGroup#i18nMaterialDetails',
+        },
+        {
+            $Type : 'UI.ReferenceFacet',
+            Label : '{i18n>SupplierDetails}',
+            ID : 'i18nSupplierDetails',
+            Target : '@UI.FieldGroup#i18nSupplierDetails',
         },
     ],
     UI.LineItem : [
@@ -157,43 +159,106 @@ annotate service.PurchasingInfoRecord with @(
             },
         ],
     },
-    UI.FieldGroup #i18nCoditions : {
+    
+    UI.FieldGroup #i18nConditions1 : {
         $Type : 'UI.FieldGroupType',
         Data : [
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.conditions.application,
-                Label : 'application',
+                Value : material.infoRecords.application,
+                Label : '{i18n>Application}',
             },
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.conditions.conditionType,
-                Label : 'conditionType',
+                Value : material.infoRecords.material_material,
+                Label : '{i18n>Material}',
             },
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.conditions.purchaseContract,
-                Label : 'purchaseContract',
+                Value : supplier.infoRecords.supplier_supplier,
+                Label : '{i18n>Supplier}',
             },
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.conditions.purchasingOrganization,
-                Label : 'purchasingOrganization',
+                Value : material.infoRecords.conditionType,
+                Label : '{i18n>ConditionType}',
             },
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.conditions.supplier_supplier,
-                Label : 'supplier_supplier',
+                Value : material.infoRecords.plant_plant,
+                Label : '{i18n>Plant}',
             },
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.conditions.material_material,
-                Label : 'material_material',
+                Value : material.infoRecords.purchaseContract,
+                Label : '{i18n>PurchaseContract}',
             },
             {
                 $Type : 'UI.DataField',
-                Value : purchasingOrgData.conditions.plant_plant,
-                Label : 'plant_plant',
+                Value : material.infoRecords.purchasingOrganization,
+                Label : '{i18n>Organization}',
+            },
+        ],
+    },
+    UI.FieldGroup #i18nMaterialDetails : {
+        $Type : 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type : 'UI.DataField',
+                Value : material.material,
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : material.industrySector,
+                Label : 'industrySector',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : material.creationDate,
+                Label : 'creationDate',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : material.baseUnit,
+                Label : 'baseUnit',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : material.materialType,
+                Label : 'materialType',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : material.materialDescriptions.materialDescriptions,
+                Label : 'materialDescriptions',
+            },
+        ],
+    },
+    UI.FieldGroup #i18nSupplierDetails : {
+        $Type : 'UI.FieldGroupType',
+        Data : [
+            {
+                $Type : 'UI.DataField',
+                Value : supplier.city,
+                Label : 'city',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : supplier.street,
+                Label : 'street',
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : supplier.country_code,
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : supplier.supplier,
+            },
+            {
+                $Type : 'UI.DataField',
+                Value : supplier.supplierName,
+                Label : 'supplierName',
             },
         ],
     },
@@ -285,6 +350,11 @@ annotate service.PurchasingInfoRecord with @(UI.PresentationVariant: {
 });
 annotate service.PurchasingOrganizationData with @(
     UI.LineItem #i18nCoditions : [
-    ]
+    ],
+    UI.LineItem #i18nMaterialdetails : [
+        
+    ],
+    UI.LineItem #i18nSupplierDetails : [
+    ],
 );
 

@@ -1,7 +1,10 @@
 namespace master.table;
 
 using {Country} from '@sap/cds/common';
-using {master.table.StorageLocations} from '../../schema';
+using {
+    master.table.StorageLocations,
+    transaction.table.MaterialInfoRecord
+} from '../../schema';
 
 
 entity Plant {
@@ -11,4 +14,6 @@ entity Plant {
         plantName        : String(30);
         city             : String(35);
         country          : Country;
+        infoRecords      : Composition of many MaterialInfoRecord
+                               on infoRecords.plant = $self;
 }

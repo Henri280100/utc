@@ -4,7 +4,7 @@ using {
     master.table.VendorMaster,
     master.table.MaterialMaster,
     master.table.Plant,
-    master.table.PurchasingOrganizationData
+    
 } from '../../schema';
 
 // Purchasing Conditions
@@ -22,7 +22,6 @@ entity MaterialInfoRecord {
                                      plant
                                  };
         purchaseContract       : String(10);
-        organization           : Association to PurchasingOrganizationData {
-                                     purchasingOrganization
-                                 };
+
+        
 }
