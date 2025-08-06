@@ -1,7 +1,7 @@
 using {
     transaction.table as tt,
     master.table      as mt
-} from '../db/schema';
+} from '../../db/schema';
 
 service PurchaseRequisitionsService {
     @odata.draft.enabled

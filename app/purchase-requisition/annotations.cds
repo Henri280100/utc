@@ -1,4 +1,4 @@
-using PurchaseRequisitionsService as service from '../../srv/purchase-requisition-service';
+using PurchaseRequisitionsService as service from '../../srv';
 
 annotate service.PurchaseRequisition with @(
     UI.FieldGroup #AccountAssignment: {

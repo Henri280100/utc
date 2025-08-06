@@ -1,4 +1,4 @@
-using PurchaseOrderService as service from '../../srv/purchase-order-service';
+using PurchaseOrderService as service from '../../srv';
 using from '@sap/cds/common';
 
 annotate service.PurchaseDocumentHeader with @(

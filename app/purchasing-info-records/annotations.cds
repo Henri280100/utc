@@ -1,4 +1,4 @@
-using PurchasingInfoRecordsService as service from '../../srv/purchasing-info-records-service';
+using PurchasingInfoRecordsService as service from '../../srv';
 annotate service.PurchasingInfoRecord with @(
     UI.FieldGroup #GeneratedGroup : {
         $Type : 'UI.FieldGroupType',

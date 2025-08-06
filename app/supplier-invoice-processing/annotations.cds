@@ -1,4 +1,4 @@
-using SupplierProcessingService as service from '../../srv/supplier-processing-service';
+using SupplierProcessingService as service from '../../srv';
 annotate service.SupplierInvoiceHeader with @(
     UI.FieldGroup #GeneratedGroup : {
         $Type : 'UI.FieldGroupType',

@@ -1,4 +1,4 @@
-using GoodReceiptService as service from '../../srv/good-receipt-service';
+using GoodReceiptService as service from '../../srv';
 annotate service.MaterialDocument with @(
     UI.FieldGroup #GeneratedGroup : {
         $Type : 'UI.FieldGroupType',
