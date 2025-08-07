@@ -38,6 +38,6 @@ entity PurchaseRequisition {
         accountAssignment       : Composition of many PurchaseRequisitionAccountAssignment
                                       on  accountAssignment.purchaseRequisition = $self.purchaseRequisition
                                       and accountAssignment.purchaseReqnItem    = $self.purchaseReqnItem;
-        purchasingInfoRecords   : Association to PurchasingInfoRecord
+        purchasingInfoRecords   : Composition of many PurchasingInfoRecord
                                       on purchasingInfoRecords.material = $self.material;
 }

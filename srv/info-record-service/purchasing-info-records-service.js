@@ -11,8 +11,6 @@ module.exports = (srv) => {
     Plant,
   } = srv.entities;
 
-  console.log("PLant Data: ", JSON.stringify(Plant))
-
   const validateMandatoryFields = async (data, req) => {
     const mandatoryFields = ["material_material", "supplier_supplier"];
 
