@@ -8,5 +8,8 @@
     // "tab",
     // "tsv"
   ],
-  "SAP HANA Database Explorer.ShowXsAdvancedConnections": true
+  "SAP HANA Database Explorer.ShowXsAdvancedConnections": true,
+  "cSpell.words": [
+    "Reqn"
+  ]
 }

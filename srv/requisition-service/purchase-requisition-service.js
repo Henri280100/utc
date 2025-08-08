@@ -1,4 +1,5 @@
 const cds = require("@sap/cds");
+const { text } = require("stream/consumers");
 
 module.exports = (srv) => {
   const {
@@ -226,39 +227,6 @@ module.exports = (srv) => {
     }
   };
 
-  async function validateForeignKeys(tx, data, context = "") {
-    if (data.material_material) {
-      const material = await tx.run(
-        SELECT.one
-          .from(MaterialMaster)
-          .where({ material: data.material_material })
-      );
-      if (!material) {
-        return `Material ${data.material_material} does not exist (${context})`;
-      }
-    }
-
-    if (data.plant_plant) {
-      const plant = await tx.run(
-        SELECT.one.from(Plant).where({ plant: data.plant_plant })
-      );
-      if (!plant) {
-        return `Plant ${data.plant_plant} does not exist (${context})`;
-      }
-    }
-
-    if (
-      data.releaseStatus &&
-      !ALLOWED_RELEASE_STATUSES.includes(data.releaseStatus)
-    ) {
-      return `Invalid releaseStatus '${
-        data.releaseStatus
-      }'. Allowed values: ${ALLOWED_RELEASE_STATUSES.join(", ")} (${context})`;
-    }
-
-    return null;
-  }
-
   const validateDataFormat = (data, context = "") => {
     if (
       data.quantity !== undefined &&
@@ -271,29 +239,32 @@ module.exports = (srv) => {
       try {
         const today = new Date();
         const deliveryDateObj = new Date(data.deliveryDate);
-    
+
         if (isNaN(deliveryDateObj.getTime())) {
           return `Invalid delivery date format: '${data.deliveryDate}' (${context})`;
         }
-    
+
         // Remove time part for accurate date-only comparison
         today.setHours(0, 0, 0, 0);
         deliveryDateObj.setHours(0, 0, 0, 0);
-    
+
         if (deliveryDateObj < today) {
-          return `Delivery Date (${deliveryDateObj.toISOString().split("T")[0]}) must be today or a future date (≥ ${today.toISOString().split("T")[0]}) (${context})`;
+          return `Delivery Date (${
+            deliveryDateObj.toISOString().split("T")[0]
+          }) must be today or a future date (≥ ${
+            today.toISOString().split("T")[0]
+          }) (${context})`;
         }
       } catch (error) {
         return `Error validating delivery date: ${error.message} (${context})`;
       }
     }
-    
 
     return null;
   };
 
-  const validatePurchasingLimit = async (data, existingPR, context = "") => {
-    const quantity = data.quantity ?? existingPR?.quantity;
+  const validatePurchasingLimit = async (data, context = "") => {
+    const quantity = data.quantity;
     const purchasingInfoRecords = data.purchasingInfoRecords;
 
     if (!quantity || quantity <= 0) {
@@ -333,6 +304,46 @@ module.exports = (srv) => {
     }
   };
 
+  const runValidations = async (data, tx, req, context = "") => {
+    const validationPromises = [
+      {
+        name: "purchasingLimit",
+        fn: validatePurchasingLimit(data, context),
+      },
+      { name: "material", fn: validateMaterial(data, req) },
+      { name: "plant", fn: validatePlant(data, req) },
+      {
+        name: "purchaseRequisitionType",
+        fn: validatePurchaseRequisitionType(data, req),
+      },
+      { name: "purchasingGroups", fn: validatePurchasingGroups(data, req) },
+      { name: "storageLocation", fn: validateStorageLocation(data, req) },
+      {
+        name: "supplier",
+        fn: validateSupplierFromPurchasingInfoRecord(data, req),
+      },
+    ];
+
+    const results = await Promise.allSettled(
+      validationPromises.map((v) => v.fn)
+    );
+
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        console.error(
+          `Validation ${validationPromises[index].name} failed`,
+          result.reason
+        );
+      }
+    });
+
+    const allValid = results.every(
+      (result) => result.status === "fulfilled" && result.value === true
+    );
+
+    if (!allValid) throw new Error("Validation failed");
+  };
+
   srv.before("UPDATE", PurchaseRequisition, async (req) => {
     const tx = cds.transaction(req);
     const { purchaseRequisition, purchaseReqnItem } = req.data;
@@ -341,7 +352,6 @@ module.exports = (srv) => {
       storageLocation_storageLocation:
         req.data.storageLocation || req.data.storageLocation_storageLocation,
     };
-    delete data.accountAssignment;
 
     try {
       const existingPR = await tx.run(
@@ -349,6 +359,7 @@ module.exports = (srv) => {
           .from(PurchaseRequisition)
           .where({ purchaseRequisition, purchaseReqnItem })
       );
+
       if (!existingPR) {
         req.error(
           404,
@@ -362,164 +373,108 @@ module.exports = (srv) => {
         req.error(400, formatError);
         return;
       }
-      const validationPromises = [
-        {
-          name: "purchasingLimit",
-          fn: validatePurchasingLimit(data, existingPR, "UPDATE"),
-        },
-        { name: "material", fn: validateMaterial(data, req) },
-        { name: "plant", fn: validatePlant(data, req) },
-        {
-          name: "purchaseRequisitionType",
-          fn: validatePurchaseRequisitionType(data, req),
-        },
-        { name: "purchasingGroups", fn: validatePurchasingGroups(data, req) },
-        { name: "storageLocation", fn: validateStorageLocation(data, req) },
-        {
-          name: "supplier",
-          fn: validateSupplierFromPurchasingInfoRecord(data, req),
-        },
-      ];
-
-      const results = await Promise.allSettled(
-        validationPromises.map((v) => v.fn)
-      );
-
-      results.forEach((result, index) => {
-        if (result.status === "rejected") {
-          console.error(
-            `Validation ${validationPromises[index].name} failed`,
-            result.reason
-          );
-        }
-      });
-
-      return results.every(
-        (result) => result.status === "fulfilled" && result.value === true
-      );
+      await runValidations(data, tx, req, "UPDATE");
     } catch (error) {
       req.error(500, `Validation error: ${error.message}`);
       return false;
     }
   });
 
-  srv.on("CREATE", async (req) => {
+  async function nextPRNumber(tx) {
+    const last = await tx.run(SELECT.one.from(PurchaseRequisition));
+    const lastNo = last?.purchaseRequisition || "1000000000";
+    return String(parseInt(lastNo, 10) + 1).padStart(10, "0");
+  }
+
+  srv.before("CREATE", "PurchaseRequisition", async (req) => {
     const tx = cds.transaction(req);
+    // ensure keys exist for non-draft paths
+
+    // NOTE: property name is PurchasingGroup (not purchasingGroup)
     const {
-      purchaseRequisition,
       material,
       plant,
       quantity,
       deliveryDate,
-      purchasingGroup,
+      PurchasingGroup,
       storageLocation,
     } = req.data;
 
-    const data = {
-      purchaseRequisition,
-      material_material: material,
-      plant_plant: plant,
-      quantity,
-      deliveryDate,
-      PurchasingGroup_purchasingGroup: purchasingGroup,
-      storageLocation_storageLocation: storageLocation,
-      releaseStatus: "Pending",
-    };
-
-    const mandatoryError = validateMandatoryFields(
-      data,
-      [
-        "material_material",
-        "plant_plant",
-        "quantity",
-        "deliveryDate",
-        "PurchasingGroup_purchasingGroup",
-      ],
-      "createPurchaseRequisitionItem"
-    );
-    if (mandatoryError) {
-      req.error(400, mandatoryError);
-      return;
-    }
-
-    const fkError = await validateForeignKeys(
-      tx,
-      data,
-      "createPurchaseRequisitionItem"
-    );
-    if (fkError) {
-      req.error(400, fkError);
-      return;
-    }
-
-    const formatError = validateDataFormat(
-      data,
-      "createPurchaseRequisitionItem"
-    );
-    if (formatError) {
-      req.error(400, formatError);
-      return;
-    }
-
-    const limitError = await validatePurchasingLimit(
-      tx,
-      data,
-      data,
-      "createPurchaseRequisitionItem"
-    );
-    if (limitError) {
-      req.error(400, limitError);
-      return;
-    }
-
-    const newItem = {
-      purchaseRequisition,
-      purchaseReqnItem: "00010",
-      material_material: material,
-      plant_plant: plant,
-      storageLocation_storageLocation: storageLocation || null,
-      PurchasingGroup_purchasingGroup: purchasingGroup,
-      purchaseRequisitionType: "NB",
-      quantity,
-      deliveryDate,
-      baseUnit: "EA",
-      requisitioner: "USER1",
-      releaseStatus: "Pending",
-      requisitionDate: new Date().toISOString().split("T")[0],
-      createdByUser: "USER1",
-    };
-
-    await tx.run(INSERT.into(PurchaseRequisition).entries(newItem));
-
-    const accountAssignment = {
-      purchaseRequisition,
-      purchaseReqnItem: "00010",
-      acctAssignment: "01",
-      acctAssignmentCategory: "K",
-      glAccount: "400000",
-      costCenter: "CC001",
-      order: "ORD001",
-    };
-
-    await tx.run(
-      INSERT.into(PurchaseRequisitionAccountAssignment).entries(
-        accountAssignment
-      )
-    );
-
-    return tx.run(
+    // Fetch supplier from PurchasingInfoRecord
+    const infoRecord = await tx.run(
       SELECT.one
-        .from(PurchaseRequisition)
-        .where({ purchaseRequisition, purchaseReqnItem: "00010" })
+        .from(PurchasingInfoRecord)
+        .where({ material_material: material })
     );
+
+    if (!infoRecord) {
+      req.error(
+        400,
+        "No Purchasing Info Record found for the selected material."
+      );
+      return;
+    }
+
+    const supplier = infoRecord.supplier_supplier;
+
+    // Validate G/L Account and Cost Center
+    const glAccount = "400000";
+    const costCenter = "CC001";
+
+    const glAccountValid = await tx.run(
+      SELECT.one.from(PurchaseRequisitionAccountAssignment).where({ glAccount })
+    );
+    if (!glAccountValid) req.error(400, "Invalid G/L Account");
+
+    const costCenterValid = await tx.run(
+      SELECT.one
+        .from(PurchaseRequisitionAccountAssignment)
+        .where({ costCenter })
+    );
+    if (!costCenterValid) req.error(400, "Invalid Cost Center");
+
+    // Enrich data
+
+    req.data.purchaseRequisition ??= await nextPRNumber(tx);
+    req.data.purchaseReqnItem ??= "00010";
+    req.data.requisitionDate = new Date().toISOString().split("T")[0];
+    req.data.baseUnit = "EA";
+    req.data.requisitioner = "USER1";
+    req.data.releaseStatus = "Pending";
+    req.data.PurchaseRequisitionType = "NB";
+    req.data.createdByUser = req.user.id;
+    req.data.supplier_supplier = supplier;
+
+    // Add account assignment inline
+    if (
+      !Array.isArray(req.data.accountAssignment) ||
+      req.data.accountAssignment.length === 0
+    ) {
+      req.data.accountAssignment = [
+        {
+          purchaseRequisition: req.data.purchaseRequisition,
+          purchaseReqnItem: req.data.purchaseReqnItem,
+          acctAssignment: "01",
+          acctAssignmentCategory: "K",
+          glAccount,
+          costCenter,
+          order: "ORD001",
+        },
+      ];
+    }
   });
 
   // Bound actions with visibility checks
   srv.before("approve", PurchaseRequisition, async (req) => {
+    const tx = cds.transaction(req);
     const { purchaseRequisition, purchaseReqnItem } = req.params[0];
-    const pr = await SELECT.one
-      .from(PurchaseRequisition)
-      .where({ purchaseRequisition, purchaseReqnItem });
+
+    const pr = await tx.run(
+      SELECT.one
+        .from(PurchaseRequisition)
+        .where({ purchaseRequisition, purchaseReqnItem })
+    );
+
     if (!pr) {
       req.error(
         404,
@@ -527,19 +482,29 @@ module.exports = (srv) => {
       );
       return;
     }
-    if (pr.releaseStatus === "Approved" || pr.releaseStatus === "Rejected") {
+
+    if (["REL", "Approved", "Rejected"].includes(pr.releaseStatus)) {
       req.error(
         400,
         `Action Approve is not available for releaseStatus: ${pr.releaseStatus}`
       );
+      return;
+    }
+
+    try {
+      await runValidations(pr, tx, req, "APPROVE");
+    } catch (error) {
+      req.error(400, error.message);
     }
   });
 
   srv.on("approve", PurchaseRequisition, async (req) => {
     const { purchaseRequisition, purchaseReqnItem } = req.params[0];
+
     await UPDATE(PurchaseRequisition)
-      .set({ releaseStatus: "Approved" })
+      .set({ releaseStatus: "REL" }) // or "Approved"
       .where({ purchaseRequisition, purchaseReqnItem });
+
     return SELECT.one
       .from(PurchaseRequisition)
       .where({ purchaseRequisition, purchaseReqnItem });
@@ -577,25 +542,25 @@ module.exports = (srv) => {
   });
 
   // Ensure Account Assignments are returned with PurchaseRequisition
-  srv.after("READ", PurchaseRequisition, async (data, req) => {
-    if (Array.isArray(data)) {
-      for (const item of data) {
-        const accountAssignments = await SELECT.from(
-          PurchaseRequisitionAccountAssignment
-        ).where({
-          purchaseRequisition: item.purchaseRequisition,
-          purchaseReqnItem: item.purchaseReqnItem,
-        });
-        item.accountAssignments = accountAssignments;
-      }
-    } else if (data) {
-      const accountAssignments = await SELECT.from(
-        PurchaseRequisitionAccountAssignment
-      ).where({
-        purchaseRequisition: data.purchaseRequisition,
-        purchaseReqnItem: data.purchaseReqnItem,
-      });
-      data.accountAssignments = accountAssignments;
-    }
-  });
+  // srv.after("READ", PurchaseRequisition, async (data, req) => {
+  //   if (Array.isArray(data)) {
+  //     for (const item of data) {
+  //       const accountAssignments = await SELECT.from(
+  //         PurchaseRequisitionAccountAssignment
+  //       ).where({
+  //         purchaseRequisition: item.purchaseRequisition,
+  //         purchaseReqnItem: item.purchaseReqnItem,
+  //       });
+  //       item.accountAssignments = accountAssignments;
+  //     }
+  //   } else if (data) {
+  //     const accountAssignments = await SELECT.from(
+  //       PurchaseRequisitionAccountAssignment
+  //     ).where({
+  //       purchaseRequisition: data.purchaseRequisition,
+  //       purchaseReqnItem: data.purchaseReqnItem,
+  //     });
+  //     data.accountAssignments = accountAssignments;
+  //   }
+  // });
 };

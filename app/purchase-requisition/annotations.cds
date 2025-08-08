@@ -195,6 +195,7 @@ annotate service.PurchaseRequisition with @(
 );
 
 
+
 annotate service.PurchaseRequisition with {
     material @(
         Common.ValueList               : {
@@ -299,6 +300,14 @@ annotate service.PurchaseRequisition with {
     // Hidden technical fields
     releaseStatus   @UI.Hidden: true;
 };
+
+annotate service.PurchaseRequisition {
+    purchaseRequisition @readonly @UI.Hidden;
+    purchaseReqnItem @readonly @UI.Hidden
+}
+
+
+
 
 annotate service.PurchaseRequisition with {
     releaseStatus @Common.Label: 'Release Status'

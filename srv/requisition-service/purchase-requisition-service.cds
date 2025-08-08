@@ -4,7 +4,7 @@ using {
 } from '../../db/schema';
 
 service PurchaseRequisitionsService {
-    @odata.draft.enabled
+
     entity PurchaseRequisition                  as projection on tt.PurchaseRequisition
         actions {
             // Bound Actions (instance-specific for line items)
@@ -39,3 +39,5 @@ service PurchaseRequisitionsService {
                                          deliveryDate : Date,
                                          purchasingGroup : String(3)) returns PurchaseRequisition;
 }
+
+annotate PurchaseRequisitionsService.PurchaseRequisition with @odata.draft.enabled;
