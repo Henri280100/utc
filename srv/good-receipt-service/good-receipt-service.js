@@ -11,25 +11,6 @@ module.exports = async (srv) => {
     StorageLocations,
   } = srv.entities;
 
-  // Helper function to validate mandatory fields
-  async function validateMandatoryFields(data, req) {
-    const mandatoryFields = [
-      "material_material",
-      "plant_plant",
-      "storageLocation",
-      "quantity",
-      "purchaseOrderItem_purchaseOrder",
-      "movementType",
-    ];
-    for (const field of mandatoryFields) {
-      if (!data[field]) {
-        req.error(400, `Mandatory field ${field} is missing`);
-        return false;
-      }
-    }
-    return true;
-  }
-
   // Helper function to validate material (MARA)
   async function validateMaterial(data, tx, req) {
     if (!data.material_material) return true;
@@ -188,54 +169,162 @@ module.exports = async (srv) => {
     return true;
   }
 
-  // Before UPDATE handler for MaterialDocument
-  srv.before("UPDATE", MaterialDocument, async (req) => {
-    const data = req.data;
+  async function autoGenDocNumber(tx) {
+    const last = await tx.run(
+      SELECT.one.from(MaterialDocument).orderBy({ materialDocNumber: "desc" })
+    );
+
+    // Start from 5500000000, increment by 1
+    const lastNumber = last?.materialDocNumber
+      ? parseInt(last.materialDocNumber, 10)
+      : 5500000000;
+    const nextNo = String(lastNumber + 1).padStart(10, "0");
+
+    return nextNo;
+  }
+
+  srv.before("CREATE", MaterialDocument.drafts, async (req) => {
     const tx = cds.transaction(req);
 
     try {
-      // Validate mandatory fields
-      if (!(await validateMandatoryFields(data, req))) {
-        return;
+      // Auto-generate Material Document number if not provided
+      if (!req.data.materialDocNumber) {
+        req.data.materialDocNumber = await autoGenDocNumber(tx);
       }
 
-      // Validate Material (MARA)
-      if (!(await validateMaterial(data, tx, req))) {
-        return;
+      // Set document year if not provided (current year)
+      if (!req.data.materialDocYear) {
+        req.data.materialDocYear = new Date().getFullYear().toString();
       }
 
-      // Validate Plant (T001W)
-      if (!(await validatePlant(data, tx, req))) {
-        return;
+      // Set document item if not provided (default to 0001)
+      if (!req.data.materialDocItem) {
+        req.data.materialDocItem = "0001";
       }
 
-      // Validate Storage Location (T001L)
-      if (!(await validateStorageLocation(data, tx, req))) {
-        return;
-      }
+      // Flatten association data for validation functions
+      const data = {
+        material_material: req.data.material?.material || req.data.material,
+        plant_plant: req.data.plant?.plant || req.data.plant,
+        storageLocation: req.data.storageLocation,
+        purchaseOrder: req.data.purchaseOrderItem?.purchaseOrder,
+        purchaseOrderItem: req.data.purchaseOrderItem?.purchaseOrderItem,
+        quantity: req.data.quantity,
+        movementType: req.data.movementType,
+        materialDocItem: req.data.materialDocItem,
+      };
 
-      // Validate Purchase Order and Item (EKPO)
+      // Run all validations using your helper functions
+      const materialValid = await validateMaterial(data, tx, req);
+      if (!materialValid) return;
+
+      const plantValid = await validatePlant(data, tx, req);
+      if (!plantValid) return;
+
+      const storageLocationValid = await validateStorageLocation(data, tx, req);
+      if (!storageLocationValid) return;
+
       const poItem = await validatePurchaseOrder(data, tx, req);
-      if (data.purchaseOrder && data.purchaseOrderItem && !poItem) {
-        return;
+      if (poItem === false) return; // Validation failed
+
+      const quantityValid = await validateQuantity(data, poItem, req);
+      if (!quantityValid) return;
+
+      const movementTypeValid = await validateMovementType(data, req);
+      if (!movementTypeValid) return;
+
+      const receivedQuantityValid = await validateReceivedQuantity(
+        data,
+        tx,
+        req
+      );
+      if (!receivedQuantityValid) return;
+
+      // Additional material consistency check with PO item
+      if (
+        poItem &&
+        data.material_material &&
+        poItem.material_material !== data.material_material
+      ) {
+        return req.error(
+          400,
+          "Material does not match the Purchase Order Item"
+        );
       }
 
-      // Validate Quantity
-      if (!(await validateQuantity(data, poItem, req))) {
-        return;
+      // Set base unit from material master if not provided
+      if (!req.data.baseUnit && data.material_material) {
+        const materialData = await tx.run(
+          SELECT.one
+            .from(MaterialMaster)
+            .columns("baseUnit")
+            .where({ material: data.material_material })
+        );
+        if (materialData?.baseUnit) {
+          req.data.baseUnit = materialData.baseUnit;
+        }
       }
 
-      // Validate Movement Type
-      if (!(await validateMovementType(data, req))) {
-        return;
-      }
-
-      // Validate Received Quantity against EKPO
-      if (!(await validateReceivedQuantity(data, tx, req))) {
-        return;
-      }
+      console.log(
+        `Creating Material Document: ${req.data.materialDocNumber} for material ${data.material_material}`
+      );
     } catch (error) {
-      req.error(500, `Error validating material document: ${error.message}`);
+      console.error("Error in MaterialDocument CREATE handler:", error);
+      return req.error(
+        500,
+        `Failed to create Material Document: ${error.message}`
+      );
     }
   });
+
+  // // Before UPDATE handler for MaterialDocument
+  // srv.before("UPDATE", MaterialDocument, async (req) => {
+  //   const data = req.data;
+  //   const tx = cds.transaction(req);
+
+  //   try {
+  //     // Validate mandatory fields
+  //     if (!(await validateMandatoryFields(data, req))) {
+  //       return;
+  //     }
+
+  //     // Validate Material (MARA)
+  //     if (!(await validateMaterial(data, tx, req))) {
+  //       return;
+  //     }
+
+  //     // Validate Plant (T001W)
+  //     if (!(await validatePlant(data, tx, req))) {
+  //       return;
+  //     }
+
+  //     // Validate Storage Location (T001L)
+  //     if (!(await validateStorageLocation(data, tx, req))) {
+  //       return;
+  //     }
+
+  //     // Validate Purchase Order and Item (EKPO)
+  //     const poItem = await validatePurchaseOrder(data, tx, req);
+  //     if (data.purchaseOrder && data.purchaseOrderItem && !poItem) {
+  //       return;
+  //     }
+
+  //     // Validate Quantity
+  //     if (!(await validateQuantity(data, poItem, req))) {
+  //       return;
+  //     }
+
+  //     // Validate Movement Type
+  //     if (!(await validateMovementType(data, req))) {
+  //       return;
+  //     }
+
+  //     // Validate Received Quantity against EKPO
+  //     if (!(await validateReceivedQuantity(data, tx, req))) {
+  //       return;
+  //     }
+  //   } catch (error) {
+  //     req.error(500, `Error validating material document: ${error.message}`);
+  //   }
+  // });
 };

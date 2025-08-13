@@ -7,5 +7,5 @@ entity PurchasingOrganizationData {
     key purchasingOrganization : String(4);
         netPrice               : Decimal(11, 2);
         priceUnit              : Decimal(5, 0);
-        
+
 }

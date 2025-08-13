@@ -3,14 +3,15 @@ namespace transaction.table;
 using {
     master.table.MaterialMaster,
     master.table.Plant,
-    transaction.table.PurchasingDocumentItem
+    transaction.table.PurchasingDocumentItem,
+    transaction.table.SupplierInvoiceHeader
 } from '../../schema';
 
 entity MaterialDocument {
     key materialDocNumber : String(10);
     key materialDocYear   : String(4);
     key materialDocItem   : String(4);
-
+        supplierInvoice : Association to SupplierInvoiceHeader;
         @mandatory
         material          : Association to MaterialMaster {
                                 material

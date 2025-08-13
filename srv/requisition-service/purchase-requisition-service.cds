@@ -3,14 +3,15 @@ using {
     master.table      as mt
 } from '../../db/schema';
 
-service PurchaseRequisitionsService {
 
+service PurchaseRequisitionsService {
+            @odata.draft.enabled
     entity PurchaseRequisition                  as projection on tt.PurchaseRequisition
         actions {
-            // Bound Actions (instance-specific for line items)
-            action approve()                    returns PurchaseRequisition;
-            action rejectOrder(reason : String(500)) returns PurchaseRequisition;
-            action cancel()                     returns PurchaseRequisition;
+            @Core.OperationAvailable: {$value: in.IsActiveEntity}
+            action approve()                               returns PurchaseRequisition;
+            @Core.OperationAvailable: {$value: in.IsActiveEntity}
+            action rejectOrder(rejectReason : String(255)) returns PurchaseRequisition;
         };
 
     entity PurchaseRequisitionAccountAssignment as projection on tt.PurchaseRequisitionAccountAssignment;
@@ -31,13 +32,4 @@ service PurchaseRequisitionsService {
 
     entity PurchasingInfoRecord                 as projection on tt.PurchasingInfoRecord;
 
-    // Unbound Actions (collection-level)
-    action createPurchaseRequisitionItem(purchaseRequisition : String(10),
-                                         material : String(40),
-                                         plant : String(4),
-                                         quantity : Decimal(13, 3),
-                                         deliveryDate : Date,
-                                         purchasingGroup : String(3)) returns PurchaseRequisition;
 }
-
-annotate PurchaseRequisitionsService.PurchaseRequisition with @odata.draft.enabled;

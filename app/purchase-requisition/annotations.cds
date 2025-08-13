@@ -62,13 +62,12 @@ annotate service.PurchaseRequisition with @(
             },
             {
                 $Type: 'UI.DataField',
-                Label: '{i18n>Plant}',
-                Value: plant_plant,
+                Label: '{i18n>StorageLocation}',
+                Value: storageLocation,
             },
             {
                 $Type: 'UI.DataField',
-                Label: '{i18n>StorageLocation}',
-                Value: storageLocation,
+                Value: plant_plant,
             },
             {
                 $Type: 'UI.DataField',
@@ -152,6 +151,11 @@ annotate service.PurchaseRequisition with @(
         },
         {
             $Type: 'UI.DataField',
+            Value: purchaseReqnItem,
+            Label: '{i18n>Item}',
+        },
+        {
+            $Type: 'UI.DataField',
             Label: '{i18n>Material}',
             Value: material_material,
         },
@@ -188,12 +192,10 @@ annotate service.PurchaseRequisition with @(
         material_material,
         plant_plant,
         PurchasingGroup_purchasingGroup,
-        releaseStatus,
         requisitionDate,
     ],
 
 );
-
 
 
 annotate service.PurchaseRequisition with {
@@ -232,7 +234,7 @@ annotate service.PurchaseRequisition with {
 
 annotate service.PurchaseRequisition with {
     plant @(
-        Common.ValueList: {
+        Common.ValueList               : {
             $Type         : 'Common.ValueListType',
             CollectionPath: 'Plant',
             Parameters    : [
@@ -240,10 +242,6 @@ annotate service.PurchaseRequisition with {
                     $Type            : 'Common.ValueListParameterInOut',
                     LocalDataProperty: plant_plant,
                     ValueListProperty: 'plant',
-                },
-                {
-                    $Type            : 'Common.ValueListParameterDisplayOnly',
-                    ValueListProperty: 'storageLocations_plant',
                 },
                 {
                     $Type            : 'Common.ValueListParameterDisplayOnly',
@@ -259,7 +257,8 @@ annotate service.PurchaseRequisition with {
                 },
             ],
         },
-        Common.Label    : '{i18n>Plant}',
+        Common.Label                   : '{i18n>Plant}',
+        Common.ValueListWithFixedValues: true,
     )
 };
 
@@ -283,7 +282,6 @@ annotate service.PurchaseRequisition with {
         Common.Label    : '{i18n>PurchasingGroup}',
     );
     releaseStatus   @(
-        Common.Text                    : releaseStatus,
         TextArrangement                : #TextOnly,
         Common.ValueListWithFixedValues: true,
         Common.ValueList               : {
@@ -296,17 +294,13 @@ annotate service.PurchaseRequisition with {
         }
     );
 
-
-    // Hidden technical fields
-    releaseStatus   @UI.Hidden: true;
 };
 
 annotate service.PurchaseRequisition {
-    purchaseRequisition @readonly @UI.Hidden;
-    purchaseReqnItem @readonly @UI.Hidden
+    purchaseRequisition   @readonly;
+    purchaseReqnItem      @readonly;
+    purchasingInfoRecords @readonly
 }
-
-
 
 
 annotate service.PurchaseRequisition with {
@@ -339,6 +333,7 @@ annotate service.PurchaseRequisition with @(UI.PresentationVariant: {
         Property  : requisitionDate,
         Descending: true,
     }],
+    GroupBy       : [quantity],
     Visualizations: ['@UI.LineItem',
     ],
 });
@@ -461,11 +456,6 @@ annotate service.PurchaseRequisition with @(UI: {
         },
         {
             $Type: 'UI.DataField',
-            Value: material.materialDescriptions.materialDescriptions,
-            Label: 'Material Description'
-        },
-        {
-            $Type: 'UI.DataField',
             Value: material.materialType,
             Label: 'Material Type'
         },
@@ -478,7 +468,12 @@ annotate service.PurchaseRequisition with @(UI: {
             $Type: 'UI.DataField',
             Value: material.baseUnit,
             Label: 'Base Unit'
-        }
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: material.materialDescriptions.materialDescriptions,
+            Label: 'materialDescriptions',
+        },
     ]},
     Identification                : [
         {
@@ -518,13 +513,7 @@ annotate service.PurchaseRequisition with @(UI: {
                 'RELEASED'
             ]}}
         },
-        {
-            $Type        : 'UI.DataFieldForAction',
-            Action       : 'PurchaseRequisitionsService.cancel',
-            Label        : 'Cancel Item',
-            Inline       : true,
-            Criticality  : #Critical,
-        }
+
     ]
 
 });
@@ -544,26 +533,7 @@ annotate PurchaseRequisitionsService.PurchaseRequisition with @(
         TargetProperties: ['releaseStatus'],
         TargetEntities  : ['accountAssignment']
     },
-    // Common.SideEffects #Edit   : {
-    //     $Type           : 'Common.SideEffectsType',
-    //     SourceProperties: [
-    //         'releaseStatus',
-    //         'quantity',
-    //         'deliveryDate'
-    //     ],
-    //     TargetProperties: [
-    //         'releaseStatus',
-    //         'quantity',
-    //         'deliveryDate'
-    //     ],
-    //     TargetEntities  : ['accountAssignment']
-    // },
-    // Common.SideEffects #Release: {
-    //     $Type           : 'Common.SideEffectsType',
-    //     SourceProperties: ['releaseStatus'],
-    //     TargetProperties: ['releaseStatus'],
-    //     TargetEntities  : ['accountAssignment']
-    // },
+
     Common.SideEffects #Cancel : {
         $Type           : 'Common.SideEffectsType',
         SourceProperties: ['releaseStatus'],
@@ -573,50 +543,52 @@ annotate PurchaseRequisitionsService.PurchaseRequisition with @(
 );
 
 annotate PurchaseRequisitionsService.PurchaseRequisition actions {
-    approve @(title: 'Approve');
-    rejectOrder  @(title: 'Reject');
-    cancel  @(title: 'Cancel');
+    approve     @(title: 'Approve');
+    rejectOrder @(title: 'Reject');
 };
 
 
 // LineItem for Account Assignments (EBKN)
-annotate service.PurchaseRequisitionAccountAssignment with @(UI: {LineItem #AccountAssignment: [
-    {
-        $Type: 'UI.DataField',
-        Value: purchaseRequisition,
-        Label: 'Purchase Requisition'
-    },
-    {
-        $Type: 'UI.DataField',
-        Value: purchaseReqnItem,
-        Label: 'Item'
-    },
-    {
-        $Type: 'UI.DataField',
-        Value: acctAssignment,
-        Label: 'Account Assignment'
-    },
-    {
-        $Type: 'UI.DataField',
-        Value: acctAssignmentCategory,
-        Label: 'Category'
-    },
-    {
-        $Type: 'UI.DataField',
-        Value: glAccount,
-        Label: 'G/L Account'
-    },
-    {
-        $Type: 'UI.DataField',
-        Value: costCenter,
-        Label: 'Cost Center'
-    },
-    {
-        $Type: 'UI.DataField',
-        Value: order,
-        Label: 'Order'
-    }
-]});
+annotate service.PurchaseRequisitionAccountAssignment with @(
+    UI                   : {LineItem #AccountAssignment: [
+        {
+            $Type: 'UI.DataField',
+            Value: purchaseRequisition,
+            Label: 'Purchase Requisition'
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: purchaseReqnItem,
+            Label: 'Item'
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: acctAssignment,
+            Label: 'Account Assignment'
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: acctAssignmentCategory,
+            Label: 'Category'
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: glAccount,
+            Label: 'G/L Account'
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: costCenter,
+            Label: 'Cost Center'
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: order,
+            Label: 'Order'
+        }
+    ]},
+    UI.LineItem #Material: [],
+);
 
 // LineItem for Supplier Info (EINA, LFA1)
 annotate service.PurchasingInfoRecord with @(UI: {LineItem #SupplierInfo: [
@@ -646,14 +618,14 @@ annotate service.PurchasingInfoRecord with @(UI: {LineItem #SupplierInfo: [
         Label: 'City'
     },
     {
-        $Type : 'UI.DataField',
-        Value : purchasingOrgData.netPrice,
-        Label : '{i18n>NetPrice}',
+        $Type: 'UI.DataField',
+        Value: purchasingOrgData.netPrice,
+        Label: '{i18n>NetPrice}',
     },
     {
-        $Type : 'UI.DataField',
-        Value : purchasingOrgData.priceUnit,
-        Label : '{i18n>PriceUnit}',
+        $Type: 'UI.DataField',
+        Value: purchasingOrgData.priceUnit,
+        Label: '{i18n>PriceUnit}',
     },
 ]});
 

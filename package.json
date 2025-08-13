@@ -8,6 +8,7 @@
   "dependencies": {
     "@cap-js/hana": "^2",
     "@sap/cds": "^9",
+    "@sap/xssec": "^4.9.1",
     "express": "^4"
   },
   "engines": {
@@ -29,7 +30,12 @@
     "watch-supplier-invoice-processing": "cds watch --open supplier-invoice-processing/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-purchasing-info-records": "cds watch --open purchasing-info-records/webapp/index.html?sap-ui-xx-viewCache=false"
   },
-  "cds": {},
+  "cds": {
+    "requires": {
+      "html5-runtime": true,
+      "destinations": true
+    }
+  },
   "sapux": [
     "app/purchase-requisition",
     "app/purchase-order",

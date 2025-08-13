@@ -4,6 +4,7 @@ version: 1.0.0
 description: "A simple CAP project."
 parameters:
   enable-parallel-deployments: true
+  deploy_mode: html5-repo
 build-parameters:
   before-all:
     - builder: custom
@@ -25,6 +26,7 @@ modules:
           srv-url: ${default-url}
     requires:
       - name: uct-db
+      - name: uct-destination
 
   - name: uct-db-deployer
     type: hdb
@@ -34,9 +36,154 @@ modules:
     requires:
       - name: uct-db
 
+  - name: uct-app-deployer
+    type: com.sap.application.content
+    path: gen
+    requires:
+      - name: uct-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: app/
+      requires:
+        - name: uctgoodreceipt
+          artifacts:
+            - good-receipt.zip
+          target-path: app/
+        - name: uctpurchaseorder
+          artifacts:
+            - purchase-order.zip
+          target-path: app/
+        - name: uctpurchaserequisition
+          artifacts:
+            - purchase-requisition.zip
+          target-path: app/
+        - name: uctpurchasinginforecords
+          artifacts:
+            - purchasing-info-records.zip
+          target-path: app/
+        - name: uctsupplierinvoiceprocessing
+          artifacts:
+            - supplier-invoice-processing.zip
+          target-path: app/
+
+  - name: uctgoodreceipt
+    type: html5
+    path: app/good-receipt
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
+      supported-platforms:
+        []
+  - name: uctpurchaseorder
+    type: html5
+    path: app/purchase-order
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
+      supported-platforms:
+        []
+  - name: uctpurchaserequisition
+    type: html5
+    path: app/purchase-requisition
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
+      supported-platforms:
+        []
+  - name: uctpurchasinginforecords
+    type: html5
+    path: app/purchasing-info-records
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
+      supported-platforms:
+        []
+  - name: uctsupplierinvoiceprocessing
+    type: html5
+    path: app/supplier-invoice-processing
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
+      supported-platforms:
+        []
+
+  - name: uct
+    type: approuter.nodejs
+    path: app/router
+    parameters:
+      keep-existing-routes: true
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv-api # must be used in xs-app.json as well
+          url: ~{srv-url}
+          forwardAuthToken: true
+      - name: uct-destination
+      - name: uct-html5-runtime
+    provides:
+      - name: app-api
+        properties:
+          app-protocol: ${protocol}
+          app-uri: ${default-uri}
+
 resources:
   - name: uct-db
     type: com.sap.xs.hdi-container
     parameters:
       service: hana
       service-plan: hdi-shared
+
+  - name: uct-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: uct-html5-runtime
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-runtime
+  - name: uct-destination
+    type: org.cloudfoundry.managed-service
+    requires:
+      - name: srv-api
+    parameters:
+      service: destination
+      service-plan: lite
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            existing_destinations_policy: update
+            destinations:
+              - Name: srv-api
+                URL: ~{srv-api/srv-url}
+                Authentication: NoAuthentication
+                Type: HTTP
+                ProxyType: Internet
+                HTML5.ForwardAuthToken: true
+                HTML5.DynamicDestination: true
+              - Name: ui5
+                URL: https://ui5.sap.com
+                Authentication: NoAuthentication
+                Type: HTTP
+                ProxyType: Internet

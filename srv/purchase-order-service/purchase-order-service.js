@@ -23,19 +23,13 @@ module.exports = async (srv) => {
 
   async function validateDocumentDate(data, req) {
     if (!data.documentDate) return true;
-
     const today = new Date();
-
     today.setHours(0, 0, 0, 0);
-
     const date = new Date(data.documentDate);
-
     if (date > today) {
       req.error(400, "Document date must be current or in the past");
-
       return false;
     }
-
     return true;
   }
 
@@ -47,16 +41,13 @@ module.exports = async (srv) => {
     const supplier = await tx.run(
       SELECT.one.from(VendorMaster).where({ supplier: data.supplier_supplier })
     );
-
     if (!supplier) {
       req.error(
         400,
         `Supplier ${data.supplier_supplier} not found in VendorMaster`
       );
-
       return null;
     }
-
     return supplier;
   }
 
@@ -195,7 +186,7 @@ module.exports = async (srv) => {
 
     const storageLoc = await tx.run(
       SELECT.one
-        .from(StorageLocation)
+        .from(StorageLocations)
         .where({ plant: plantId, storageLocation: data.storageLocation })
     );
 
@@ -610,78 +601,84 @@ module.exports = async (srv) => {
     }
   });
 
-  // Before UPDATE handler for PurchasingDocumentItem
+  async function generatePONumber(tx) {
+    const last = await tx.run(
+      SELECT.one
+        .from(PurchaseDocumentHeader)
+        .orderBy({ purchaseOrder: "desc" })
+    );
+    const next = String(parseInt(last?.purchaseOrder || "0", 10) + 1).padStart(
+      10,
+      "0"
+    );
+    return next;
+  }
 
-  srv.before("UPDATE", PurchaseDocumentItem, async (req) => {
-    const data = req.data;
+  async function getPriceFromPIR (tx, material, supplier) {
+    const pir = await tx.run(
+      SELECT.one.from(PurchasingInfoRecord)
+        .where({ material_material: material, supplier_supplier: supplier })
+        .columns(p => p.purchasingOrgData(d => d.columns('netPrice', 'priceUnit')))
+    )
+    if (pir?.purchasingOrgData?.length) {
+      const { netPrice, priceUnit } = pir.purchasingOrgData[0]
+      return { netPrice, priceUnit }
+    }
+    return { netPrice: null, priceUnit: null }
+  }
 
+  // Draft phase: just gentle defaults (won’t override UI)
+  srv.before("NEW", PurchaseDocumentHeader.drafts, async (req) => {
     const tx = cds.transaction(req);
+    req.data.purchaseOrder = await generatePONumber(tx);
+    req.data.documentCategory ??= 'F'       // Purchase Order
+    req.data.purchaseOrderType ??= 'NB'     // keep your custom type if you set it
+    req.data.documentDate ??= new Date()
+    req.data.currency_code ??= 'USD'        // FK field, not association
+    req.data.paymentTerms ??= '0001'
+    // Do NOT generate purchaseOrder here (only on activation/CREATE)
+  })
 
-    try {
-      // Assume a default purchasing organization
+  // Activation: final checks, minimal enrichment, atomic deep-insert
+  srv.before("CREATE", PurchaseDocumentHeader.drafts, async (req) => {
+    const tx = cds.transaction(req)
 
-      const purchasingOrg = "1000"; // Example purchasing organization ID
+    // Assign number if the caller didn't send one (covers non-draft callers)
+    if (!req.data.purchaseOrder) {
+      req.data.purchaseOrder = await generatePONumber(tx)
+    }
+    const po = req.data.purchaseOrder
 
-      // Fetch header for supplier information
+    // Items: if you want to enforce "at least one item", keep this tiny check:
+    // if (!Array.isArray(req.data.purchasingDocumentItem) || req.data.purchasingDocumentItem.length === 0) {
+    //   return req.error(400, 'At least one purchasingDocumentItem is required')
+    // }
 
-      const header = await tx.run(
-        SELECT.one
-          .from(PurchaseDocumentHeader)
-          .where({ purchaseOrder: data.purchaseOrder })
-      );
+    // Check if purchasingDocumentItem exists and is an array before processing
+    if (req.data.purchasingDocumentItem && Array.isArray(req.data.purchasingDocumentItem)) {
+      // Ensure item technicals; do NOT re-check mandatory fields here
+      for (let i = 0; i < req.data.purchasingDocumentItem.length; i++) {
+        const it = req.data.purchasingDocumentItem[i]
+        it.purchaseOrder = po
+        if (!it.purchaseOrderItem) {
+          it.purchaseOrderItem = String((i + 1) * 10).padStart(5, '0')
+        }
 
-      if (!header) {
-        req.error(404, `Purchase order ${data.purchaseOrder} does not exist`);
-
-        return;
-      }
-
-      // Validate Material
-
-      if (!(await validateMaterial(data, tx, req))) {
-        return;
-      }
-
-      // Validate Plant
-
-      if (!(await validatePlant(data, tx, req))) {
-        return;
-      }
-
-      // Validate StorageLocation
-
-      if (data.storageLocation || data.plant_plant) {
-        if (!(await validateStorageLocation(data, tx, req))) {
-          return;
+        // Optional enrichment (only if you want it; otherwise remove this block)
+        if ((it.netPrice == null || Number.isNaN(it.netPrice)) && req.data.supplier_supplier && it.material_material) {
+          const { netPrice, priceUnit } = await getPriceFromPIR(tx, it.material_material, req.data.supplier_supplier)
+          if (netPrice != null) it.netPrice = netPrice
+          if (priceUnit != null) it.priceUnit = priceUnit
+          if (it.priceUnit == null) it.priceUnit = 1
         }
       }
-
-      // Validate PurchaseRequisition
-
-      if (
-        !(await validatePurchaseRequisition(
-          data,
-          tx,
-          req,
-          `item ${data.purchaseOrderItem}`
-        ))
-      ) {
-        return;
-      }
-
-      // Validate Quantity
-
-      if (!(await validateQuantity(data, req))) {
-        return;
-      }
-
-      // Validate NetPrice
-
-      if (!(await validateNetPrice(data, header, purchasingOrg, tx, req))) {
-        return;
-      }
-    } catch (error) {
-      req.error(500, `Error validating purchase order item: ${error.message}`);
     }
-  });
+
+    // Gentle defaults that won't overwrite your payload (optional)
+    req.data.documentCategory ??= 'F'
+    req.data.purchaseOrderType ??= 'NB'
+    req.data.documentDate ??= new Date()
+    req.data.currency_code ??= 'USD'
+    req.data.paymentTerms ??= '0001'
+  })
 };

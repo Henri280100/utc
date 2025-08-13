@@ -6,8 +6,11 @@ using {
 service PurchaseOrderService {
     @odata.draft.enabled
     entity PurchaseDocumentHeader     as projection on tt.PurchasingDocumentHeader;
+
     entity PurchaseDocumentItem       as projection on tt.PurchasingDocumentItem;
+
     entity PurchaseRequisition        as projection on tt.PurchaseRequisition;
+
     entity MaterialMaster             as projection on mt.MaterialMaster;
     entity MaterialDescriptions       as projection on mt.MaterialDescriptions;
     entity Plant                      as projection on mt.Plant;

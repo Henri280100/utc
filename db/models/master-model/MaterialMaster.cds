@@ -5,7 +5,8 @@ using {
     master.table.MaterialDescriptions,
     master.table.MaterialGroups,
     master.table.MaterialPlantData,
-    transaction.table.MaterialInfoRecord
+    transaction.table.MaterialInfoRecord,
+    transaction.table.MaterialDocument
 } from '../../schema';
 
 entity MaterialMaster {
@@ -22,4 +23,6 @@ entity MaterialMaster {
                                };
         infoRecords          : Composition of many MaterialInfoRecord
                                    on infoRecords.material = $self;
+        materialMaster       : Composition of many MaterialDocument
+                                   on materialMaster.material = $self;
 }

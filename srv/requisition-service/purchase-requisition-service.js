@@ -15,16 +15,7 @@ module.exports = (srv) => {
 
   const BUDGET_LIMIT = 500000;
 
-  const ALLOWED_RELEASE_STATUSES = [
-    "Pending",
-    "Approved",
-    "Rejected",
-    "Released",
-    "REL",
-    "Cancelled",
-  ];
-
-  function validateMandatoryFields(data, context = "") {
+  const validateMandatoryFields = async (data, req) => {
     const mandatoryFields = [
       "material_material",
       "plant_plant",
@@ -39,11 +30,13 @@ module.exports = (srv) => {
     );
 
     if (missing.length > 0) {
-      return `Missing mandatory fields in ${context}: ${missing.join(", ")}`;
+      req.error(
+        `Missing mandatory fields in ${missing}: ${missing.join(", ")}`
+      );
     }
 
     return null;
-  }
+  };
 
   const validateMaterial = async (data, tx, req) => {
     const { material_material, purchasingInfoRecords } = data;
@@ -310,6 +303,10 @@ module.exports = (srv) => {
         name: "purchasingLimit",
         fn: validatePurchasingLimit(data, context),
       },
+      {
+        name: "mandatoryFields",
+        fn: validateMandatoryFields(data, req),
+      },
       { name: "material", fn: validateMaterial(data, req) },
       { name: "plant", fn: validatePlant(data, req) },
       {
@@ -381,98 +378,95 @@ module.exports = (srv) => {
   });
 
   async function nextPRNumber(tx) {
-    const last = await tx.run(SELECT.one.from(PurchaseRequisition));
+    const last = await tx.run(
+      SELECT.one
+        .from(PurchaseRequisition)
+        .orderBy({ purchaseRequisition: "desc" })
+    );
     const lastNo = last?.purchaseRequisition || "1000000000";
-    return String(parseInt(lastNo, 10) + 1).padStart(10, "0");
+    const nextNo = String(parseInt(lastNo, 10) + 1).padStart(10, "0");
+
+    return nextNo;
   }
 
-  srv.before("CREATE", "PurchaseRequisition", async (req) => {
-    const tx = cds.transaction(req);
-    // ensure keys exist for non-draft paths
+    // Use this handler for validation and generating the final ID before saving.
+    srv.before("CREATE", PurchaseRequisition, async (req) => {
+      console.log("Creating a permanent PurchaseRequisition.");
+      const tx = cds.transaction(req);
+      const { data } = req;
+  
+      // Only provide number if missing (in case NEW doesn't work)
+      if (!data.purchaseRequisition) {
+        data.purchaseRequisition = await nextPRNumber(tx);
+      }
+      if (!data.purchaseReqnItem) {
+        data.purchaseReqnItem = "00010";
+      }
+  
 
-    // NOTE: property name is PurchasingGroup (not purchasingGroup)
-    const {
-      material,
-      plant,
-      quantity,
-      deliveryDate,
-      PurchasingGroup,
-      storageLocation,
-    } = req.data;
-
-    // Fetch supplier from PurchasingInfoRecord
-    const infoRecord = await tx.run(
-      SELECT.one
-        .from(PurchasingInfoRecord)
-        .where({ material_material: material })
-    );
-
-    if (!infoRecord) {
-      req.error(
-        400,
-        "No Purchasing Info Record found for the selected material."
+  
+      // Fetch supplier from PurchasingInfoRecord
+      const infoRecord = await tx.run(
+        SELECT.one
+          .from(PurchasingInfoRecord)
+          .where({ material_material: material.material_material })
       );
-      return;
-    }
-
-    const supplier = infoRecord.supplier_supplier;
-
-    // Validate G/L Account and Cost Center
-    const glAccount = "400000";
-    const costCenter = "CC001";
-
-    const glAccountValid = await tx.run(
-      SELECT.one.from(PurchaseRequisitionAccountAssignment).where({ glAccount })
-    );
-    if (!glAccountValid) req.error(400, "Invalid G/L Account");
-
-    const costCenterValid = await tx.run(
-      SELECT.one
-        .from(PurchaseRequisitionAccountAssignment)
-        .where({ costCenter })
-    );
-    if (!costCenterValid) req.error(400, "Invalid Cost Center");
-
-    // Enrich data
-
-    req.data.purchaseRequisition ??= await nextPRNumber(tx);
-    req.data.purchaseReqnItem ??= "00010";
-    req.data.requisitionDate = new Date().toISOString().split("T")[0];
-    req.data.baseUnit = "EA";
-    req.data.requisitioner = "USER1";
-    req.data.releaseStatus = "Pending";
-    req.data.PurchaseRequisitionType = "NB";
-    req.data.createdByUser = req.user.id;
-    req.data.supplier_supplier = supplier;
-
-    // Add account assignment inline
-    if (
-      !Array.isArray(req.data.accountAssignment) ||
-      req.data.accountAssignment.length === 0
-    ) {
-      req.data.accountAssignment = [
+      if (!infoRecord) {
+        return req.error(
+          400,
+          "No Purchasing Info Record found for the selected material."
+        );
+      }
+  
+      // Enrich data
+      data.createdByUser = req.user?.id || requisitioner;
+      data.supplier_supplier = infoRecord.supplier_supplier;
+  
+      // Add account assignment, using the new keys
+      data.accountAssignment = [
         {
-          purchaseRequisition: req.data.purchaseRequisition,
-          purchaseReqnItem: req.data.purchaseReqnItem,
+          purchaseRequisition: data.purchaseRequisition, // Use the newly generated ID
+          purchaseReqnItem: data.purchaseReqnItem, // Use the newly generated item
           acctAssignment: "01",
           acctAssignmentCategory: "K",
-          glAccount,
-          costCenter,
+          glAccount: "400000",
+          costCenter: "CC001",
           order: "ORD001",
         },
       ];
-    }
+  
+      if (infoRecord.netPrice) {
+        data.netPrice = infoRecord.netPrice;
+      }
+
+    });
+
+  srv.before("NEW", PurchaseRequisition.drafts, async (req) => {
+    const tx = cds.transaction(req);
+    req.data.purchaseRequisition = await nextPRNumber(tx);
+    req.data.purchaseReqnItem = "00010"; // maybe the purchase Reqn item always 00010 right?
+
+    req.data.requisitionDate = new Date().toISOString().split("T")[0];
+    req.data.releaseStatus = "Pending";
+    req.data.PurchaseRequisitionType = "NB";
+    req.data.baseUnit = "EA";
+    return req.data;
   });
+
+
 
   // Bound actions with visibility checks
   srv.before("approve", PurchaseRequisition, async (req) => {
     const tx = cds.transaction(req);
     const { purchaseRequisition, purchaseReqnItem } = req.params[0];
 
+    if (!purchaseRequisition || !purchaseReqnItem)
+      return req.error(400, "Missing PR keys");
+
     const pr = await tx.run(
       SELECT.one
         .from(PurchaseRequisition)
-        .where({ purchaseRequisition, purchaseReqnItem })
+        .where({ purchaseRequisition, purchaseReqnItem, IsActiveEntity: true })
     );
 
     if (!pr) {
@@ -483,14 +477,15 @@ module.exports = (srv) => {
       return;
     }
 
-    if (["REL", "Approved", "Rejected"].includes(pr.releaseStatus)) {
-      req.error(
-        400,
-        `Action Approve is not available for releaseStatus: ${pr.releaseStatus}`
-      );
-      return;
+    if (pr.releaseStatus === "REL") {
+      return req.error(400, "PR already released");
     }
-
+    if (pr.releaseStatus && pr.releaseStatus !== "NOT_REL") {
+      return req.error(
+        400,
+        `Approve not allowed from status ${pr.releaseStatus}`
+      );
+    }
     try {
       await runValidations(pr, tx, req, "APPROVE");
     } catch (error) {
@@ -499,68 +494,123 @@ module.exports = (srv) => {
   });
 
   srv.on("approve", PurchaseRequisition, async (req) => {
-    const { purchaseRequisition, purchaseReqnItem } = req.params[0];
+    const tx = cds.transaction(req);
+    const { purchaseRequisition, purchaseReqnItem } = req.params[0] || {};
 
-    await UPDATE(PurchaseRequisition)
-      .set({ releaseStatus: "REL" }) // or "Approved"
-      .where({ purchaseRequisition, purchaseReqnItem });
+    const updated = await tx.run(
+      UPDATE(PurchaseRequisition)
+        .set({
+          releaseStatus: "REL",
+          releasedBy: req.user?.id || "SYSTEM",
+          releasedAt: new Date(),
+        })
+        .where({
+          purchaseRequisition,
+          purchaseReqnItem,
+          IsActiveEntity: true,
+          releaseStatus: "NOT_REL",
+        })
+    );
+    if (updated !== 1) {
+      return req.error(409, "PR status changed by someone else");
+    }
 
-    return SELECT.one
-      .from(PurchaseRequisition)
-      .where({ purchaseRequisition, purchaseReqnItem });
+    return true;
+  });
+  // Only allow edits before release
+  srv.before("PATCH", PurchaseRequisition, async (req) => {
+    const tx = cds.transaction(req);
+    const keys = {
+      purchaseRequisition: req.data.purchaseRequisition,
+      purchaseReqnItem: req.data.purchaseReqnItem,
+    };
+    if (!keys.purchaseRequisition || !keys.purchaseReqnItem) return;
+
+    const cur = await tx.run(
+      SELECT.one
+        .from(PurchaseRequisition)
+        .columns("releaseStatus")
+        .where({ ...keys, IsActiveEntity: true })
+    );
+    if (cur?.releaseStatus === "REL") {
+      //released: prohibits changing main business fields
+      const blocked = [
+        "quantity",
+        "deliveryDate",
+        "material",
+        "plant",
+        "storageLocation",
+        "PurchasingGroup",
+        "accountAssignment",
+      ];
+      const tried = Object.keys(req.data).filter((k) => blocked.includes(k));
+      if (tried.length)
+        return req.error(
+          400,
+          `PR released; cannot modify: ${tried.join(", ")}`
+        );
+    }
   });
 
-  srv.before("rejectOrder", PurchaseRequisition, async (req) => {
-    const { purchaseRequisition, purchaseReqnItem } = req.params[0];
-    const pr = await SELECT.one
-      .from(PurchaseRequisition)
-      .where({ purchaseRequisition, purchaseReqnItem });
-    if (!pr) {
-      req.error(
+  srv.before("rejectOrder", PurchaseRequisition.drafts, async (req) => {
+    const tx = cds.transaction(req);
+    const { purchaseRequisition, purchaseReqnItem } = req.params[0] || {};
+    const { rejectReason } = req.data || {};
+
+    if (!purchaseRequisition || !purchaseReqnItem)
+      return req.error(400, "Missing PR keys");
+    if (!rejectReason || !rejectReason.trim())
+      return req.error(400, "Rejection reason is required");
+    if (rejectReason.length > 255)
+      return req.error(400, "Reason too long (max 255)");
+
+    const pr = await tx.run(
+      SELECT.one
+        .from(PurchaseRequisition)
+        .columns("releaseStatus")
+        .where({ purchaseRequisition, purchaseReqnItem})
+    );
+    if (!pr)
+      return req.error(
         404,
-        `Purchase Requisition ${purchaseRequisition}/${purchaseReqnItem} not found`
+        `PR ${purchaseRequisition}/${purchaseReqnItem} not found`
       );
-      return;
-    }
-    if (pr.releaseStatus === "Approved" || pr.releaseStatus === "Rejected") {
-      req.error(
+    if (pr.releaseStatus === "REL")
+      return req.error(400, "Cannot reject a released PR");
+    if (pr.releaseStatus && pr.releaseStatus !== "NOT_REL")
+      return req.error(
         400,
-        `Action Reject is not available for releaseStatus: ${pr.releaseStatus}`
+        `Reject not allowed from status ${pr.releaseStatus}`
       );
-    }
   });
 
-  srv.on("rejectOrder", PurchaseRequisition, async (req) => {
-    const { purchaseRequisition, purchaseReqnItem } = req.params[0];
-    const { reason } = req.data;
-    await UPDATE(PurchaseRequisition)
-      .set({ releaseStatus: "Rejected" })
-      .where({ purchaseRequisition, purchaseReqnItem });
-    return SELECT.one
-      .from(PurchaseRequisition)
-      .where({ purchaseRequisition, purchaseReqnItem });
-  });
+  srv.on("rejectOrder", PurchaseRequisition.drafts, async (req) => {
+    const tx = cds.transaction(req);
+    const { purchaseRequisition, purchaseReqnItem } = req.params[0] || {};
+    const { rejectReason } = req.data || {};
 
-  // Ensure Account Assignments are returned with PurchaseRequisition
-  // srv.after("READ", PurchaseRequisition, async (data, req) => {
-  //   if (Array.isArray(data)) {
-  //     for (const item of data) {
-  //       const accountAssignments = await SELECT.from(
-  //         PurchaseRequisitionAccountAssignment
-  //       ).where({
-  //         purchaseRequisition: item.purchaseRequisition,
-  //         purchaseReqnItem: item.purchaseReqnItem,
-  //       });
-  //       item.accountAssignments = accountAssignments;
-  //     }
-  //   } else if (data) {
-  //     const accountAssignments = await SELECT.from(
-  //       PurchaseRequisitionAccountAssignment
-  //     ).where({
-  //       purchaseRequisition: data.purchaseRequisition,
-  //       purchaseReqnItem: data.purchaseReqnItem,
-  //     });
-  //     data.accountAssignments = accountAssignments;
-  //   }
-  // });
+    const updated = await tx.run(
+      UPDATE(PurchaseRequisition)
+        .set({
+          releaseStatus: "REJ", // keep statuses consistent: NOT_REL | REL | REJ
+          rejectReason: rejectReason.trim(),
+          rejectedBy: req.user?.id || "SYSTEM", // add these cols if you created them
+          rejectedAt: new Date(),
+        })
+        .where({
+          purchaseRequisition,
+          purchaseReqnItem,
+          IsActiveEntity: true,
+          releaseStatus: "NOT_REL", // CAS guard
+        })
+    );
+    if (updated !== 1)
+      return req.error(409, "PR status changed by someone else");
+
+    return tx.run(
+      SELECT.one
+        .from(PurchaseRequisition)
+        .where({ purchaseRequisition, purchaseReqnItem, IsActiveEntity: true })
+    );
+  });
 };

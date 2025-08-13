@@ -1,6 +1,5 @@
 namespace transaction.table;
 
-
 using {
     master.table.PurchasingGroups,
     master.table.MaterialMaster,
@@ -8,7 +7,6 @@ using {
     transaction.table.PurchaseRequisitionAccountAssignment,
     transaction.table.PurchasingInfoRecord
 } from '../../schema';
-
 
 entity PurchaseRequisition {
     key purchaseRequisition     : String(10);
@@ -34,7 +32,8 @@ entity PurchaseRequisition {
         PurchasingGroup         : Association to PurchasingGroups;
         PurchaseRequisitionType : String(4);
         requisitionDate         : Date;
-        createdByUser           : String @cds.on.insert: $user;
+        createdByUser           : String(20) @cds.on.insert: $user;
+        rejectReason            : String(255);
         accountAssignment       : Composition of many PurchaseRequisitionAccountAssignment
                                       on  accountAssignment.purchaseRequisition = $self.purchaseRequisition
                                       and accountAssignment.purchaseReqnItem    = $self.purchaseReqnItem;

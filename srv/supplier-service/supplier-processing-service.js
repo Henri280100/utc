@@ -14,147 +14,6 @@ module.exports = (srv) => {
     VendorMaster,
   } = srv.entities;
 
-  const validateMandatoryFields = async (data, req) => {
-    const mandatoryFields = [
-      "supplier_supplier",
-      "documentDate",
-      "grossAmount",
-      "currency_code",
-    ];
-
-    for (let field of mandatoryFields) {
-      if (!data[field]) {
-        req.error(400, `Mandatory field ${field} is missing`);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const validatePurchaseOrder = async (data, tx, req) => {
-    const { purchaseOrder_purchaseOrder, purchaseOrderItem_purchaseOrderItem } = data;
-  
-    // Early return if required PO data is not provided
-    if (!purchaseOrder_purchaseOrder && !purchaseOrderItem_purchaseOrderItem) {
-      return true;
-    }
-  
-    try {
-      const validationPromises = [];
-      
-      // Validate Purchase Order Header if provided
-      if (purchaseOrder_purchaseOrder) {
-        validationPromises.push(
-          tx.run(
-            SELECT.one
-              .from(PurchasingDocumentHeader)
-              .where({ purchaseOrder: purchaseOrder_purchaseOrder })
-          )
-        );
-      }
-  
-      // Validate Purchase Order Item if provided
-      if (purchaseOrderItem_purchaseOrderItem) {
-        validationPromises.push(
-          tx.run(
-            SELECT.one
-              .from(PurchasingDocumentItem)
-              .where({ purchaseOrderItem: purchaseOrderItem_purchaseOrderItem })
-          )
-        );
-      }
-  
-      const [poExists, poItemExists] = await Promise.all(validationPromises);
-  
-      // Check validation results
-      if (purchaseOrder_purchaseOrder && !poExists) {
-        req.error(
-          400,
-          `Purchase Order '${purchaseOrder_purchaseOrder}' not found`,
-          'PURCHASE_ORDER_NOT_FOUND'
-        );
-        return false;
-      }
-  
-      if (purchaseOrderItem_purchaseOrderItem && !poItemExists) {
-        req.error(
-          400,
-          `Purchase Order Item '${purchaseOrderItem_purchaseOrderItem}' not found`,
-          'PURCHASE_ORDER_ITEM_NOT_FOUND'
-        );
-        return false;
-      }
-  
-      return true;
-    } catch (error) {
-      req.error(
-        500,
-        `Error validating purchase order: ${error.message}`,
-        'PURCHASE_ORDER_VALIDATION_ERROR'
-      );
-      return false;
-    }
-  };
-  
-  const validateMaterialItems = async (data, tx, req) => {
-    const items = data?.supplierInvoiceItem;
-  
-    // Early return if no items to validate
-    if (!Array.isArray(items) || items.length === 0) {
-      return true;
-    }
-  
-    try {
-      // Collect all unique material codes that need validation
-      const materialCodes = items
-        .map(item => item?.material_material)
-        .filter(Boolean)
-        .filter((code, index, arr) => arr.indexOf(code) === index); // Remove duplicates
-  
-      if (materialCodes.length === 0) {
-        return true; // No materials to validate
-      }
-  
-      // Batch validate all materials at once
-      const materialValidations = await Promise.all(
-        materialCodes.map(materialCode =>
-          tx.run(
-            SELECT.one
-              .from(MaterialMaster)
-              .where({ material: materialCode })
-          ).then(result => ({ materialCode, exists: !!result }))
-        )
-      );
-  
-      // Check for any missing materials
-      const missingMaterials = materialValidations
-        .filter(validation => !validation.exists)
-        .map(validation => validation.materialCode);
-  
-      if (missingMaterials.length > 0) {
-        const errorMessage = missingMaterials.length === 1
-          ? `Material '${missingMaterials[0]}' not found in Material Master`
-          : `Materials not found in Material Master: ${missingMaterials.map(m => `'${m}'`).join(', ')}`;
-        
-        req.error(
-          400,
-          errorMessage,
-          'MATERIAL_NOT_FOUND'
-        );
-        return false;
-      }
-  
-      return true;
-    } catch (error) {
-      req.error(
-        500,
-        `Error validating materials: ${error.message}`,
-        'MATERIAL_VALIDATION_ERROR'
-      );
-      return false;
-    }
-  };
-
   const validateDataFormat = (data, context = "", req) => {
     // Validate grossAmount
     if (
@@ -196,8 +55,140 @@ module.exports = (srv) => {
     return true;
   };
 
+  const validatePurchaseOrder = async (data, tx, req) => {
+    const { purchaseOrder_purchaseOrder, purchaseOrderItem_purchaseOrderItem } =
+      data;
+
+    // Early return if required PO data is not provided
+    if (!purchaseOrder_purchaseOrder && !purchaseOrderItem_purchaseOrderItem) {
+      return true;
+    }
+
+    try {
+      const validationPromises = [];
+
+      // Validate Purchase Order Header if provided
+      if (purchaseOrder_purchaseOrder) {
+        validationPromises.push(
+          tx.run(
+            SELECT.one
+              .from(PurchasingDocumentHeader)
+              .where({ purchaseOrder: purchaseOrder_purchaseOrder })
+          )
+        );
+      }
+
+      // Validate Purchase Order Item if provided
+      if (purchaseOrderItem_purchaseOrderItem) {
+        validationPromises.push(
+          tx.run(
+            SELECT.one
+              .from(PurchasingDocumentItem)
+              .where({ purchaseOrderItem: purchaseOrderItem_purchaseOrderItem })
+          )
+        );
+      }
+
+      const [poExists, poItemExists] = await Promise.all(validationPromises);
+
+      // Check validation results
+      if (purchaseOrder_purchaseOrder && !poExists) {
+        req.error(
+          400,
+          `Purchase Order '${purchaseOrder_purchaseOrder}' not found`,
+          "PURCHASE_ORDER_NOT_FOUND"
+        );
+        return false;
+      }
+
+      if (purchaseOrderItem_purchaseOrderItem && !poItemExists) {
+        req.error(
+          400,
+          `Purchase Order Item '${purchaseOrderItem_purchaseOrderItem}' not found`,
+          "PURCHASE_ORDER_ITEM_NOT_FOUND"
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      req.error(
+        500,
+        `Error validating purchase order: ${error.message}`,
+        "PURCHASE_ORDER_VALIDATION_ERROR"
+      );
+      return false;
+    }
+  };
+
+  const validateMaterialItems = async (data, tx, req) => {
+    const items = data?.supplierInvoiceItem;
+
+    // Early return if no items to validate
+    if (!Array.isArray(items) || items.length === 0) {
+      return true;
+    }
+
+    try {
+      // Collect all unique material codes that need validation
+      const materialCodes = items
+        .map((item) => item?.material_material)
+        .filter(Boolean)
+        .filter((code, index, arr) => arr.indexOf(code) === index); // Remove duplicates
+
+      if (materialCodes.length === 0) {
+        return true; // No materials to validate
+      }
+
+      // Batch validate all materials at once
+      const materialValidations = await Promise.all(
+        materialCodes.map((materialCode) =>
+          tx
+            .run(
+              SELECT.one.from(MaterialMaster).where({ material: materialCode })
+            )
+            .then((result) => ({ materialCode, exists: !!result }))
+        )
+      );
+
+      // Check for any missing materials
+      const missingMaterials = materialValidations
+        .filter((validation) => !validation.exists)
+        .map((validation) => validation.materialCode);
+
+      if (missingMaterials.length > 0) {
+        const errorMessage =
+          missingMaterials.length === 1
+            ? `Material '${missingMaterials[0]}' not found in Material Master`
+            : `Materials not found in Material Master: ${missingMaterials
+                .map((m) => `'${m}'`)
+                .join(", ")}`;
+
+        req.error(400, errorMessage, "MATERIAL_NOT_FOUND");
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      req.error(
+        500,
+        `Error validating materials: ${error.message}`,
+        "MATERIAL_VALIDATION_ERROR"
+      );
+      return false;
+    }
+  };
+
   const validatePurchasingLimit = async (data, tx, req, context = "") => {
-    const items = data.supplierInvoiceItem;
+    const items = Array.isArray(data?.supplierInvoiceItem)
+      ? data.supplierInvoiceItem
+      : [];
+
+    // Early return if no items to validate
+    if (items.length === 0) {
+      return true;
+    }
+
     let totalInvoiceAmount = 0;
 
     for (const item of items) {
@@ -261,47 +252,70 @@ module.exports = (srv) => {
     return true;
   };
 
-  srv.before("UPDATE", SupplierInvoiceHeader, async (req) => {
-    const data = req.data;
+  async function autoGenInvoiceItem(tx) {
+    const last = await tx.run(
+      SELECT.one
+        .from(SupplierInvoiceHeader)
+        .orderBy({ supplierInvoice: "desc" })
+    );
+
+    // Start from 5500000000, increment by 1
+    const lastNumber = last?.supplierInvoice
+      ? parseInt(last.supplierInvoice, 10)
+      : 5500000000;
+    const nextNo = String(lastNumber + 1).padStart(10, "0");
+
+    return nextNo;
+  }
+
+  srv.before("CREATE", SupplierInvoiceHeader.drafts, async (req) => {
     const tx = cds.transaction(req);
-    const operation = "UPDATE";
+    const operation = "CREATE";
+    const data = req.data;
 
     try {
-      // Run synchronous validations first
-      const formatValid = validateDataFormat(data, operation, req);
-      if (!formatValid) return false;
-  
-      // Run all async validations
-      const validationPromises = [
-        { name: 'mandatoryFields', fn: validateMandatoryFields(data, req) },
-        { name: 'vendorSupplier', fn: validateVendorSupplier(data, tx, req) },
-        { name: 'purchaseOrder', fn: validatePurchaseOrder(data, tx, req) },
-        { name: 'materialItems', fn: validateMaterialItems(data, tx, req) }
-      ];
-  
-      const results = await Promise.allSettled(
-        validationPromises.map(v => v.fn)
-      );
-  
-      // Log any rejected promises for debugging
-      results.forEach((result, index) => {
-        if (result.status === 'rejected') {
-          console.error(`Validation ${validationPromises[index].name} failed:`, result.reason);
-        }
-      });
-  
-      // Check if all validations passed
-      return results.every(result => 
-        result.status === 'fulfilled' && result.value === true
-      );
-  
-    } catch (error) {
-      req.error(500, `Validation error: ${error.message}`, 'VALIDATION_ERROR');
-      return false;
-    }
-  });
+      if (!data.supplierInvoice) {
+        data.supplierInvoice = await autoGenInvoiceItem(tx);
+      }
+      if (!data.fiscalYear) {
+        const currentYear = new Date().getFullYear().toString();
+        data.fiscalYear = currentYear;
+      }
 
-  srv.before("CREATE", SupplierInvoiceHeader, async (req) => {
-    // will do it later
+      if (!data.currency || typeof data.currency !== "object") {
+        data.currency = { code: "AUD" };
+      }
+
+      // Step 3: Run all validations in parallel
+      const validationTasks = [
+        validatePurchaseOrder(data, tx, req),
+        validateMaterialItems(data, tx, req),
+      ];
+
+      const validationResults = await Promise.allSettled(validationTasks);
+
+      const hasValidationErrors = validationResults.some(
+        (result) => result.status === "rejected" || result.value === false
+      );
+      if (hasValidationErrors) return;
+
+      // Step 4: Validate data format
+      const isFormatValid = validateDataFormat(data, operation, req);
+      if (!isFormatValid) return;
+
+      // Step 5: Validate purchasing limits
+      const isLimitValid = await validatePurchasingLimit(
+        data,
+        tx,
+        req,
+        operation
+      );
+      if (!isLimitValid) return;
+
+      // All validations passed — proceed with creation logic
+      // You can now insert accounting entries or other business logic here
+    } catch (error) {
+      req.error(500, `Unexpected error during CREATE: ${error.message}`);
+    }
   });
 };

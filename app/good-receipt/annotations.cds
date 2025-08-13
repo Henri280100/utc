@@ -203,6 +203,7 @@ annotate service.MaterialDocument with @(
             },
         ],
     },
+    
     UI.SelectionFields : [
         material_material,
         plant_plant,
@@ -223,6 +224,7 @@ annotate service.MaterialDocument with @(
             },
         ],
     },
+    UI.UpdateHidden: true
 );
 
 annotate service.MaterialDocument with {
@@ -326,6 +328,15 @@ annotate service.MaterialDocument with @(UI.PresentationVariant: {
         Property  : materialDocYear,
         Descending: true,
     }],
+    GroupBy : [
+        material_material
+    ],
     Visualizations: ['@UI.LineItem',
     ],
 });
+
+annotate service.MaterialDocument with {
+    materialDocNumber @readonly;
+    materialDocYear @readonly;
+    materialDocItem @readonly;
+};
