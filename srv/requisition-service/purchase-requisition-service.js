@@ -13,6 +13,8 @@ module.exports = (srv) => {
     PurchaseRequisitionAccountAssignment,
   } = srv.entities;
 
+  console.log("PurhcaseRequisition srv", srv.entities.PurchaseRequisition);
+
   const BUDGET_LIMIT = 500000;
 
   const validateMandatoryFields = async (data, req) => {
@@ -389,57 +391,54 @@ module.exports = (srv) => {
     return nextNo;
   }
 
-    // Use this handler for validation and generating the final ID before saving.
-    srv.before("CREATE", PurchaseRequisition, async (req) => {
-      console.log("Creating a permanent PurchaseRequisition.");
-      const tx = cds.transaction(req);
-      const { data } = req;
-  
-      // Only provide number if missing (in case NEW doesn't work)
-      if (!data.purchaseRequisition) {
-        data.purchaseRequisition = await nextPRNumber(tx);
-      }
-      if (!data.purchaseReqnItem) {
-        data.purchaseReqnItem = "00010";
-      }
-  
+  // Use this handler for validation and generating the final ID before saving.
+  srv.before("CREATE", PurchaseRequisition, async (req) => {
+    console.log("Creating a permanent PurchaseRequisition.");
+    const tx = cds.transaction(req);
+    const { data } = req;
 
-  
-      // Fetch supplier from PurchasingInfoRecord
-      const infoRecord = await tx.run(
-        SELECT.one
-          .from(PurchasingInfoRecord)
-          .where({ material_material: material.material_material })
+    // Only provide number if missing (in case NEW doesn't work)
+    if (!data.purchaseRequisition) {
+      data.purchaseRequisition = await nextPRNumber(tx);
+    }
+    if (!data.purchaseReqnItem) {
+      data.purchaseReqnItem = "00010";
+    }
+
+    // Fetch supplier from PurchasingInfoRecord
+    const infoRecord = await tx.run(
+      SELECT.one
+        .from(PurchasingInfoRecord)
+        .where({ material_material: data.material_material })
+    );
+    if (!infoRecord) {
+      return req.error(
+        400,
+        "No Purchasing Info Record found for the selected material."
       );
-      if (!infoRecord) {
-        return req.error(
-          400,
-          "No Purchasing Info Record found for the selected material."
-        );
-      }
-  
-      // Enrich data
-      data.createdByUser = req.user?.id || requisitioner;
-      data.supplier_supplier = infoRecord.supplier_supplier;
-  
-      // Add account assignment, using the new keys
-      data.accountAssignment = [
-        {
-          purchaseRequisition: data.purchaseRequisition, // Use the newly generated ID
-          purchaseReqnItem: data.purchaseReqnItem, // Use the newly generated item
-          acctAssignment: "01",
-          acctAssignmentCategory: "K",
-          glAccount: "400000",
-          costCenter: "CC001",
-          order: "ORD001",
-        },
-      ];
-  
-      if (infoRecord.netPrice) {
-        data.netPrice = infoRecord.netPrice;
-      }
+    }
 
-    });
+    // Enrich data
+    data.createdByUser = req.user?.id || requisitioner;
+    data.supplier_supplier = infoRecord.supplier_supplier;
+
+    // Add account assignment, using the new keys
+    data.accountAssignment = [
+      {
+        purchaseRequisition: data.purchaseRequisition, // Use the newly generated ID
+        purchaseReqnItem: data.purchaseReqnItem, // Use the newly generated item
+        acctAssignment: "01",
+        acctAssignmentCategory: "K",
+        glAccount: "400000",
+        costCenter: "CC001",
+        order: "ORD001",
+      },
+    ];
+    
+    // if (infoRecord.purchasingOrgData.netPrice) {
+    //   data.infoRecord.purchasingOrgData.netPrice = infoRecord.purchasingOrgData.netPrice;
+    // }
+  });
 
   srv.before("NEW", PurchaseRequisition.drafts, async (req) => {
     const tx = cds.transaction(req);
@@ -447,75 +446,73 @@ module.exports = (srv) => {
     req.data.purchaseReqnItem = "00010"; // maybe the purchase Reqn item always 00010 right?
 
     req.data.requisitionDate = new Date().toISOString().split("T")[0];
-    req.data.releaseStatus = "Pending";
+    req.data.releaseStatus = "NOT_REL";
     req.data.PurchaseRequisitionType = "NB";
     req.data.baseUnit = "EA";
     return req.data;
   });
 
-
-
   // Bound actions with visibility checks
   srv.before("approve", PurchaseRequisition, async (req) => {
     const tx = cds.transaction(req);
-    const { purchaseRequisition, purchaseReqnItem } = req.params[0];
-
-    if (!purchaseRequisition || !purchaseReqnItem)
-      return req.error(400, "Missing PR keys");
-
-    const pr = await tx.run(
-      SELECT.one
-        .from(PurchaseRequisition)
-        .where({ purchaseRequisition, purchaseReqnItem, IsActiveEntity: true })
-    );
-
-    if (!pr) {
-      req.error(
-        404,
-        `Purchase Requisition ${purchaseRequisition}/${purchaseReqnItem} not found`
-      );
-      return;
-    }
-
-    if (pr.releaseStatus === "REL") {
-      return req.error(400, "PR already released");
-    }
-    if (pr.releaseStatus && pr.releaseStatus !== "NOT_REL") {
-      return req.error(
-        400,
-        `Approve not allowed from status ${pr.releaseStatus}`
-      );
-    }
+    const keys = req.params[0];
     try {
-      await runValidations(pr, tx, req, "APPROVE");
+      if (!keys?.purchaseRequisition || !keys?.purchaseReqnItem) {
+        return req.error(400, "Missing PR keys");
+      }
+
+      // Simplified query
+      const pr = await tx.run(SELECT.one.from(PurchaseRequisition).where(keys));
+
+      if (!pr) {
+        return req.error(
+          404,
+          `Purchase Requisition ${keys.purchaseRequisition}/${keys.purchaseReqnItem} not found`
+        );
+      }
+
+      if (pr.releaseStatus === "REL") {
+        return req.error(400, "PR already released");
+      }
+
+      if (pr.releaseStatus && pr.releaseStatus !== "NOT_REL") {
+        return req.error(
+          400,
+          `Approve not allowed from status ${pr.releaseStatus}`
+        );
+      }
     } catch (error) {
-      req.error(400, error.message);
+      return req.error(400, error.message);
     }
   });
 
   srv.on("approve", PurchaseRequisition, async (req) => {
     const tx = cds.transaction(req);
-    const { purchaseRequisition, purchaseReqnItem } = req.params[0] || {};
+    const keys = req.params[0] || {};
 
-    const updated = await tx.run(
-      UPDATE(PurchaseRequisition)
-        .set({
-          releaseStatus: "REL",
-          releasedBy: req.user?.id || "SYSTEM",
-          releasedAt: new Date(),
-        })
-        .where({
-          purchaseRequisition,
-          purchaseReqnItem,
-          IsActiveEntity: true,
-          releaseStatus: "NOT_REL",
-        })
-    );
-    if (updated !== 1) {
-      return req.error(409, "PR status changed by someone else");
+    try {
+      const updated = await tx.run(
+        UPDATE(PurchaseRequisition)
+          .set({
+            releaseStatus: "REL",
+            releasedBy: req.user?.id || "SYSTEM",
+            releasedAt: new Date(),
+          })
+          .where({
+            purchaseRequisition: keys.purchaseRequisition,
+            purchaseReqnItem: keys.purchaseReqnItem,
+            releaseStatus: "NOT_REL",
+          })
+      );
+
+      if (updated !== 1) {
+        return req.error(409, "PR status changed by someone else");
+      }
+
+      return true;
+    } catch (error) {
+      return req.error(500, `Update failed: ${error.message}`);
     }
-
-    return true;
   });
   // Only allow edits before release
   srv.before("PATCH", PurchaseRequisition, async (req) => {
@@ -552,65 +549,79 @@ module.exports = (srv) => {
     }
   });
 
-  srv.before("rejectOrder", PurchaseRequisition.drafts, async (req) => {
+  srv.before("rejectOrder", PurchaseRequisition, async (req) => {
     const tx = cds.transaction(req);
     const { purchaseRequisition, purchaseReqnItem } = req.params[0] || {};
     const { rejectReason } = req.data || {};
 
-    if (!purchaseRequisition || !purchaseReqnItem)
+    if (!purchaseRequisition || !purchaseReqnItem) {
       return req.error(400, "Missing PR keys");
-    if (!rejectReason || !rejectReason.trim())
+    }
+    if (!rejectReason || !rejectReason.trim()) {
       return req.error(400, "Rejection reason is required");
-    if (rejectReason.length > 255)
+    }
+    if (rejectReason.length > 255) {
       return req.error(400, "Reason too long (max 255)");
+    }
 
     const pr = await tx.run(
       SELECT.one
         .from(PurchaseRequisition)
         .columns("releaseStatus")
-        .where({ purchaseRequisition, purchaseReqnItem})
+        .where({ purchaseRequisition, purchaseReqnItem })
     );
-    if (!pr)
+
+    if (!pr) {
       return req.error(
         404,
         `PR ${purchaseRequisition}/${purchaseReqnItem} not found`
       );
-    if (pr.releaseStatus === "REL")
+    }
+    if (pr.releaseStatus === "REL") {
       return req.error(400, "Cannot reject a released PR");
-    if (pr.releaseStatus && pr.releaseStatus !== "NOT_REL")
+    }
+    if (pr.releaseStatus && pr.releaseStatus !== "NOT_REL") {
       return req.error(
         400,
         `Reject not allowed from status ${pr.releaseStatus}`
       );
+    }
   });
 
-  srv.on("rejectOrder", PurchaseRequisition.drafts, async (req) => {
+  // This should be extended more function such as: After reject the item will be disabled
+  srv.on("rejectOrder", PurchaseRequisition, async (req) => {
     const tx = cds.transaction(req);
     const { purchaseRequisition, purchaseReqnItem } = req.params[0] || {};
     const { rejectReason } = req.data || {};
 
-    const updated = await tx.run(
-      UPDATE(PurchaseRequisition)
-        .set({
-          releaseStatus: "REJ", // keep statuses consistent: NOT_REL | REL | REJ
-          rejectReason: rejectReason.trim(),
-          rejectedBy: req.user?.id || "SYSTEM", // add these cols if you created them
-          rejectedAt: new Date(),
-        })
-        .where({
-          purchaseRequisition,
-          purchaseReqnItem,
-          IsActiveEntity: true,
-          releaseStatus: "NOT_REL", // CAS guard
-        })
-    );
-    if (updated !== 1)
-      return req.error(409, "PR status changed by someone else");
+    try {
+      const updated = await tx.run(
+        UPDATE(PurchaseRequisition)
+          .set({
+            releaseStatus: "REJ",
+            rejectReason: rejectReason.trim(),
+          })
+          .where({
+            purchaseRequisition,
+            purchaseReqnItem,
+            releaseStatus: "NOT_REL", // Remove IsActiveEntity if causing issues
+          })
+      );
 
-    return tx.run(
-      SELECT.one
-        .from(PurchaseRequisition)
-        .where({ purchaseRequisition, purchaseReqnItem, IsActiveEntity: true })
-    );
+      if (updated !== 1) {
+        return req.error(409, "PR status changed by someone else");
+      }
+
+      return tx.run(
+        SELECT.one
+          .from(PurchaseRequisition)
+          .where({ purchaseRequisition, purchaseReqnItem })
+      );
+    } catch (error) {
+      console.error("Reject operation failed:", error);
+      return req.error(500, `Operation failed: ${error.message}`);
+    }
   });
+
+  
 };

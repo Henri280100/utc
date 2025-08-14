@@ -285,32 +285,32 @@ annotate service.SupplierInvoiceItem with @(
     UI.LineItem #i18nGrDetails: [
         {
             $Type : 'UI.DataField',
-            Value : material.materialMaster.materialDocItem,
+            Value : materialDoc.materialMaster.materialDocItem,
             Label : '{i18n>DocItem}',
         },
         {
             $Type : 'UI.DataField',
-            Value : material.materialMaster.materialDocNumber,
+            Value : materialDoc.materialMaster.materialDocNumber,
             Label : '{i18n>DocNo}',
         },
         {
             $Type : 'UI.DataField',
-            Value : material.materialMaster.materialDocYear,
+            Value : materialDoc.materialMaster.materialDocYear,
             Label : '{i18n>DocYear}',
         },
         {
             $Type : 'UI.DataField',
-            Value : material.materialMaster.movementType,
+            Value : materialDoc.materialMaster.movementType,
             Label : '{i18n>MovementType}',
         },
         {
             $Type : 'UI.DataField',
-            Value : material.materialMaster.baseUnit,
+            Value : materialDoc.materialMaster.baseUnit,
             Label : '{i18n>BaseUnit}',
         },
         {
             $Type : 'UI.DataField',
-            Value : material.materialMaster.quantity,
+            Value : materialDoc.materialMaster.quantity,
             Label : '{i18n>Quantity}',
         },
     ],

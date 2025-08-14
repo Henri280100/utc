@@ -6,5 +6,6 @@
       "destination": "srv-api",
       "csrfProtection": true
     }
-  ]
+  ],
+  "welcomeFile": "/managementsourcingrfq"
 }

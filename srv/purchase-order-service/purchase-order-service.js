@@ -21,7 +21,7 @@ module.exports = async (srv) => {
 
   // Helper function to validate document date
 
-  async function validateDocumentDate(data, req) {
+  function validateDocumentDate(data, req) {
     if (!data.documentDate) return true;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -560,7 +560,9 @@ module.exports = async (srv) => {
     try {
       // Validate DocumentDate
 
-      if (!(await validateDocumentDate(data, req))) {
+      const validateDate = validateDocumentDate(data,req);
+      if (validateDate) {
+        req.error(400, validateDate)
         return;
       }
 

@@ -153,10 +153,6 @@ annotate service.PurchasingInfoRecord with @(
                 Value : purchasingOrgData.priceUnit,
                 Label : '{i18n>PriceUnit}',
             },
-            {
-                $Type : 'UI.DataField',
-                Value : purchasingOrgData.purchasingOrganization,
-            },
         ],
     },
     

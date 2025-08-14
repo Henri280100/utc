@@ -7,7 +7,6 @@ using {
     transaction.table.PurchaseRequisitionAccountAssignment,
     transaction.table.PurchasingInfoRecord
 } from '../../schema';
-
 entity PurchaseRequisition {
     key purchaseRequisition     : String(10);
     key purchaseReqnItem        : String(5);

@@ -19,6 +19,6 @@ entity PurchasingInfoRecord {
         supplier             : Association to VendorMaster {
                                    supplier
                                };
-        purchasingOrgData    : Composition of PurchasingOrganizationData
+        purchasingOrgData    : Composition of many PurchasingOrganizationData
                                    on purchasingOrgData.purchasingInfoRecord = $self.purchasingInfoRecord;
 }

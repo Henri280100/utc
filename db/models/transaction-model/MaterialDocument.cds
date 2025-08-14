@@ -11,7 +11,8 @@ entity MaterialDocument {
     key materialDocNumber : String(10);
     key materialDocYear   : String(4);
     key materialDocItem   : String(4);
-        supplierInvoice : Association to SupplierInvoiceHeader;
+        supplierInvoice   : Association to SupplierInvoiceHeader;
+
         @mandatory
         material          : Association to MaterialMaster {
                                 material

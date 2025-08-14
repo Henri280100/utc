@@ -360,14 +360,14 @@ annotate service.PurchaseDocumentItem with @(
 
     UI.LineItem #i18nPricing           : [
         {
-            $Type: 'UI.DataField',
-            Value: purchaseRequisition.purchasingInfoRecords.purchasingOrgData.priceUnit,
-            Label: 'priceUnit',
+            $Type : 'UI.DataField',
+            Value : material.infoRecords.purchasingOrgData.priceUnit,
+            Label : 'priceUnit',
         },
         {
-            $Type: 'UI.DataField',
-            Value: purchaseRequisition.purchasingInfoRecords.purchasingOrgData.netPrice,
-            Label: 'netPrice',
+            $Type : 'UI.DataField',
+            Value : material.infoRecords.purchasingOrgData.netPrice,
+            Label : 'netPrice',
         },
     ],
     UI.LineItem #i18nPrReference       : [

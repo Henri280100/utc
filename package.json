@@ -19,7 +19,9 @@
     "@cap-js/cds-types": "^0.13.0",
     "@cap-js/sqlite": "^2",
     "@sap/cds-dk": ">=8",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "rimraf": "^5.0.5",
+    "mbt": "^1.2.29"
   },
   "scripts": {
     "start": "cds-serve",
@@ -28,7 +30,11 @@
     "watch-purchase-order": "cds watch --open purchase-order/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-good-receipt": "cds watch --open good-receipt/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-supplier-invoice-processing": "cds watch --open supplier-invoice-processing/webapp/index.html?sap-ui-xx-viewCache=false",
-    "watch-purchasing-info-records": "cds watch --open purchasing-info-records/webapp/index.html?sap-ui-xx-viewCache=false"
+    "watch-purchasing-info-records": "cds watch --open purchasing-info-records/webapp/index.html?sap-ui-xx-viewCache=false",
+    "watch-management-sourcing-rfq": "cds watch --open management-sourcing-rfq/webapp/index.html?sap-ui-xx-viewCache=false",
+    "undeploy": "cf undeploy uct --delete-services --delete-service-keys --delete-service-brokers",
+    "build": "rimraf resources mta_archives && mbt build --mtar archive",
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
   },
   "cds": {
     "requires": {
@@ -41,7 +47,8 @@
     "app/purchase-order",
     "app/good-receipt",
     "app/supplier-invoice-processing",
-    "app/purchasing-info-records"
+    "app/purchasing-info-records",
+    "app/management-sourcing-rfq"
   ],
   "imports": {
     "#cds-models/*": "./@cds-models/*/index.js"

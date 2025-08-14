@@ -6,6 +6,7 @@ using {
 // Manage and view all the main data
 service SourcingRFQService {
     entity PurchasingDocumentHeader   as projection on tt.PurchasingDocumentHeader;
+
     entity PurchasingDocumentItem     as projection on tt.PurchasingDocumentItem;
     entity VendorMaster               as projection on mt.VendorMaster;
     entity PurchasingDocumentTypes    as projection on mt.PurchasingDocumentTypes;
