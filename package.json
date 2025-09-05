@@ -2,7 +2,10 @@
   "name": "uct",
   "version": "1.0.0",
   "description": "A simple CAP project.",
-  "repository": "<Add your repository here>",
+  "repository": {
+    "type": "git",
+    "url": "<Add your repository here>"
+  },
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
@@ -20,12 +23,12 @@
     "@cap-js/sqlite": "^2",
     "@sap/cds-dk": ">=8",
     "@types/node": "^22.0.0",
-    "rimraf": "^5.0.5",
-    "mbt": "^1.2.29"
+    "@ui5/cli": "^4.0.23",
+    "mbt": "^1.2.29",
+    "rimraf": "^5.0.5"
   },
   "scripts": {
     "start": "cds-serve",
-    "watch-purchasing-requisition": "cds watch --open purchasing-requisition/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-purchase-requisition": "cds watch --open purchase-requisition/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-purchase-order": "cds watch --open purchase-order/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-good-receipt": "cds watch --open good-receipt/webapp/index.html?sap-ui-xx-viewCache=false",
@@ -40,6 +43,9 @@
     "requires": {
       "html5-runtime": true,
       "destinations": true
+    },
+    "odata": {
+      "version": "v4"
     }
   },
   "sapux": [
@@ -47,10 +53,13 @@
     "app/purchase-order",
     "app/good-receipt",
     "app/supplier-invoice-processing",
-    "app/purchasing-info-records",
+    "app/purchasing-iasnfo-records",
     "app/management-sourcing-rfq"
   ],
   "imports": {
     "#cds-models/*": "./@cds-models/*/index.js"
-  }
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": ""
 }

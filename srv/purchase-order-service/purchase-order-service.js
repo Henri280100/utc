@@ -651,11 +651,6 @@ module.exports = async (srv) => {
     }
     const po = req.data.purchaseOrder
 
-    // Items: if you want to enforce "at least one item", keep this tiny check:
-    // if (!Array.isArray(req.data.purchasingDocumentItem) || req.data.purchasingDocumentItem.length === 0) {
-    //   return req.error(400, 'At least one purchasingDocumentItem is required')
-    // }
-
     // Check if purchasingDocumentItem exists and is an array before processing
     if (req.data.purchasingDocumentItem && Array.isArray(req.data.purchasingDocumentItem)) {
       // Ensure item technicals; do NOT re-check mandatory fields here

@@ -1,5 +1,4 @@
 const cds = require("@sap/cds");
-const { text } = require("stream/consumers");
 
 module.exports = (srv) => {
   const {
@@ -9,8 +8,7 @@ module.exports = (srv) => {
     StorageLocations,
     PurchasingGroups,
     PurchasingDocumentTypes,
-    PurchasingInfoRecord,
-    PurchaseRequisitionAccountAssignment,
+    PurchasingInfoRecord
   } = srv.entities;
 
   console.log("PurhcaseRequisition srv", srv.entities.PurchaseRequisition);
@@ -434,10 +432,7 @@ module.exports = (srv) => {
         order: "ORD001",
       },
     ];
-    
-    // if (infoRecord.purchasingOrgData.netPrice) {
-    //   data.infoRecord.purchasingOrgData.netPrice = infoRecord.purchasingOrgData.netPrice;
-    // }
+
   });
 
   srv.before("NEW", PurchaseRequisition.drafts, async (req) => {

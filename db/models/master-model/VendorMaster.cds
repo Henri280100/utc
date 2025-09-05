@@ -10,5 +10,5 @@ entity VendorMaster {
         country      : Country;
         city         : String(35);
         street       : String(35);
-        infoRecords    : Composition of many MaterialInfoRecord on infoRecords.supplier = $self;
+        materialInfoRecords    : Composition of many MaterialInfoRecord on materialInfoRecords.supplier = $self;
 }

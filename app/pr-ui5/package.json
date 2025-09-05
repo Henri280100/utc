@@ -1,0 +1,11 @@
+{
+  "name": "ui5.walkthrough",
+  "version": "1.0.0",
+  "description": "The Purchase Requisition UI5 application",
+  "scripts": {
+    "start": "ui5 serve -o index.html"
+  },
+  "devDependencies": {
+    "ui5-middleware-simpleproxy": "^3.4.3"
+  }
+}

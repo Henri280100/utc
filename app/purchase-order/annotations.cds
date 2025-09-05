@@ -172,6 +172,18 @@ annotate service.PurchaseDocumentHeader with @(
 
 );
 
+annotate service.PurchaseDocumentHeader with @(
+    Common.SideEffects #Approve :{
+        $Type : 'Common.SideEffectsType',
+        SourceProperties : []
+    }
+);
+annotate service.PurchaseDocumentHeader actions {
+    approve     @(title: 'Approve');
+    rejectOrder @(title: 'Reject');
+};
+
+
 
 annotate service.PurchaseDocumentHeader with {
     supplier @(
@@ -373,6 +385,16 @@ annotate service.PurchaseDocumentItem with @(
     UI.LineItem #i18nPrReference       : [
         {
             $Type: 'UI.DataField',
+            Value: purchaseRequisition.purchaseRequisition,
+            Label: '{i18n>Pr}',
+        },
+        {
+            $Type: 'UI.DataField',
+            Value: purchaseRequisition.purchaseReqnItem,
+            Label: '{i18n>PrItem}',
+        },
+        {
+            $Type: 'UI.DataField',
             Value: purchaseRequisition.baseUnit,
             Label: '{i18n>BaseUnit}',
         },
@@ -385,16 +407,6 @@ annotate service.PurchaseDocumentItem with @(
             $Type: 'UI.DataField',
             Value: purchaseRequisition.deliveryDate,
             Label: '{i18n>DeliveryDate}',
-        },
-        {
-            $Type: 'UI.DataField',
-            Value: purchaseRequisition.purchaseRequisition,
-            Label: '{i18n>Pr}',
-        },
-        {
-            $Type: 'UI.DataField',
-            Value: purchaseRequisition.purchaseReqnItem,
-            Label: '{i18n>PrItem}',
         },
         {
             $Type: 'UI.DataField',

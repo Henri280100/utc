@@ -26,6 +26,8 @@ entity PurchasingDocumentHeader {
         purchasingGroup        : Association to PurchasingGroups {
                                      purchasingGroup
                                  };
+        rejectReason           : String(255);
+        rejectedBy             : String(20) @cds.on.insert: $user;
 
         @mandatory
         documentDate           : Date;

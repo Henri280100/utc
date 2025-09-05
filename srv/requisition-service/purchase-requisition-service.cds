@@ -6,30 +6,61 @@ using {
 
 service PurchaseRequisitionsService {
             @odata.draft.enabled
-    entity PurchaseRequisition                  as projection on tt.PurchaseRequisition
+    entity PurchaseRequisition     as projection on tt.PurchaseRequisition
         actions {
-            @Core.OperationAvailable: {$value: in.IsActiveEntity}
-            action approve()                               returns PurchaseRequisition;
-            @Core.OperationAvailable: {$value: in.IsActiveEntity}
-            action rejectOrder(rejectReason : String(255)) returns PurchaseRequisition;
+
+            @Core.OperationAvailable: {$edmJson: {$And: [
+                {$Ne: [
+                    {$Path: 'releaseStatus'},
+                    'REL'
+                ]},
+                {$Ne: [
+                    {$Path: 'releaseStatus'},
+                    'REJ'
+                ]},
+                {$Eq: [{
+                    $Path: 'IsActiveEntity',
+                    false
+                }]}
+
+            ]}}
+            action approve()                              returns PurchaseRequisition;
+
+            @Core.OperationAvailable: {$edmJson: {$And: [
+                {$Ne: [
+                    {$Path: 'releaseStatus'},
+                    'REL'
+                ]},
+                {$Ne: [
+                    {$Path: 'releaseStatus'},
+                    'REJ'
+                ]},
+                {$Eq: [{
+                    $Path: 'IsActiveEntity',
+                    false
+                }]}
+            ]}}
+            action rejectOrder(rejectReason: String(255)) returns PurchaseRequisition;
+
+
         };
 
-    entity PurchaseRequisitionAccountAssignment as projection on tt.PurchaseRequisitionAccountAssignment;
+    @readonly
+    entity MaterialMaster          as projection on mt.MaterialMaster;
 
-    entity MaterialMaster                       as projection on mt.MaterialMaster;
+    entity Plant                   as projection on mt.Plant;
 
-    entity MaterialDescriptions                 as projection on mt.MaterialDescriptions;
-
-    entity Plant                                as projection on mt.Plant;
-
-    entity StorageLocations                     as projection on mt.StorageLocations;
-    entity PurchasingGroups                     as projection on mt.PurchasingGroups;
-    entity PurchasingDocumentTypes              as projection on mt.PurchasingDocumentTypes;
+    entity StorageLocations        as projection on mt.StorageLocations;
+    entity PurchasingGroups        as projection on mt.PurchasingGroups;
+    entity PurchasingDocumentTypes as projection on mt.PurchasingDocumentTypes;
 
 
-    entity PurchasingOrganization               as projection on mt.PurchasingOrganizationData;
-    entity VendorMaster                         as projection on mt.VendorMaster;
+    entity PurchasingOrganization  as projection on mt.PurchasingOrganizationData;
 
-    entity PurchasingInfoRecord                 as projection on tt.PurchasingInfoRecord;
+    @readonly
+    entity VendorMaster            as projection on mt.VendorMaster;
+
+    @readonly
+    entity PurchasingInfoRecord    as projection on tt.PurchasingInfoRecord;
 
 }

@@ -4,8 +4,14 @@ using {
 } from '../../db/schema';
 
 service PurchaseOrderService {
-    @odata.draft.enabled
-    entity PurchaseDocumentHeader     as projection on tt.PurchasingDocumentHeader;
+            @odata.draft.enabled
+    entity PurchaseDocumentHeader     as projection on tt.PurchasingDocumentHeader
+        actions {
+            @Core.OperationAvailable: {$value: in.IsActiveEntity}
+            action approve()                              returns PurchaseDocumentHeader;
+            @Core.OperationAvailable: {$value: in.IsActiveEntity}
+            action rejectOrder(rejectReason: String(255)) returns PurchaseDocumentHeader;
+        };
 
     entity PurchaseDocumentItem       as projection on tt.PurchasingDocumentItem;
 

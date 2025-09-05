@@ -1,0 +1,154 @@
+<mvc:View
+	controllerName="sap.ui.prui5.controller.Detail"
+	xmlns="sap.uxap"
+	xmlns:m="sap.m"
+	xmlns:form="sap.ui.layout.form"
+	xmlns:mvc="sap.ui.core.mvc"
+>
+	<ObjectPageLayout
+		id="idObjectPageLayout"
+		showTitleInHeaderContent="true"
+		isChildPage="true"
+		upperCaseAnchorBar="false"
+	>
+		<headerTitle>
+			<ObjectPageDynamicHeaderTitle>
+				<actions>
+					<m:ToggleButton
+						text="Approved"
+						type="Emphasized"
+						press=".onApproveToggleButtonPress"
+					/>
+					<m:ToggleButton
+						text="Rejected"
+						type="Emphasized"
+						press=".onRejectToggleButtonPress"
+					/>
+					<m:ToggleButton
+						text="Edit"
+						type="Emphasized"
+						press=".onEditToggleButtonPress"
+					/>
+					<m:Button
+						text="Delete"
+						type="Transparent"
+					/>
+					<m:Button
+						text="Copy"
+						type="Transparent"
+					/>
+					<m:Button
+						icon="sap-icon://action"
+						type="Transparent"
+					/>
+				</actions>
+			</ObjectPageDynamicHeaderTitle>
+		</headerTitle>
+		<headerContent>
+			<m:FlexBox
+				wrap="Wrap"
+				fitContainer="true"
+				alignItems="Stretch"
+			>
+				<m:Avatar
+					displaySize="L"
+					displayShape="Square"
+					class="sapUiTinyMarginEnd"
+				/>
+				<m:VBox
+					justifyContent="Center"
+					class="sapUiSmallMarginEnd"
+				>
+					<m:Label text="Purchase Requisition" />
+				</m:VBox>
+				<m:VBox
+					justifyContent="Center"
+					class="sapUiSmallMarginEnd"
+				>
+					<m:Label text="Reqn Items" />
+				</m:VBox>
+				<m:VBox
+					justifyContent="Center"
+					class="sapUiSmallMarginEnd"
+				>
+					<m:Label text="Status" />
+				</m:VBox>
+			</m:FlexBox>
+		</headerContent>
+		<sections>
+			<ObjectPageSection title="General Information">
+				<subSections>
+					<ObjectPageSubSection>
+						<blocks>
+							<form:SimpleForm
+								maxContainerCols="2"
+								editable="false"
+								layout="ResponsiveGridLayout"
+								labelSpanL="12"
+								labelSpanM="12"
+								emptySpanL="0"
+								emptySpanM="0"
+								columnsL="1"
+								columnsM="1"
+							>
+								<form:content>
+									<m:Label text="Purchase Requisition ID" />
+									<m:Label text="Material Desc" />
+									<m:Label text="Quantity" />
+									<m:Label text="Delivery Date" />
+									<m:Label text="Status" />
+								</form:content>
+							</form:SimpleForm>
+						</blocks>
+					</ObjectPageSubSection>
+				</subSections>
+			</ObjectPageSection>
+			<ObjectPageSection title="Suppliers">
+				<subSections>
+					<ObjectPageSubSection>
+						<blocks>
+							<m:Table
+								id="idPurchasingInfoRecordsTable"
+								growing="true"
+								items="{
+								path: 'PurchaseRequisition>/PurchasingInfoRecord',
+								parameters: {
+									expand: 'supplier($select=supplierName,country_code)'
+								},
+								events: {
+									dataReceived: '.onTableDataReceived'
+								}
+							}"
+							>
+								<m:columns>
+									<m:Column>
+										<m:Label text="Supplier Name" />
+									</m:Column>
+									<m:Column>
+										<m:Label text="Country" />
+									</m:Column>
+								</m:columns>
+								<m:items>
+									<m:ColumnListItem>
+										<m:ObjectIdentifier
+											text="{PurchaseRequisition>supplier/supplierName}" />
+										<m:ObjectIdentifier
+											text="{PurchaseRequisition>supplier/country_code}" />
+
+									</m:ColumnListItem>
+								</m:items>
+							</m:Table>
+						</blocks>
+					</ObjectPageSubSection>
+				</subSections>
+			</ObjectPageSection>
+		</sections>
+		<footer>
+			<m:OverflowToolbar>
+				<m:ToolbarSpacer />
+				<m:Button type="Accept" text="Save" />
+				<m:Button type="Reject" text="Cancel" />
+			</m:OverflowToolbar>
+		</footer>
+	</ObjectPageLayout>
+</mvc:View>

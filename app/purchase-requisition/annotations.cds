@@ -62,11 +62,6 @@ annotate service.PurchaseRequisition with @(
             },
             {
                 $Type: 'UI.DataField',
-                Label: '{i18n>StorageLocation}',
-                Value: storageLocation,
-            },
-            {
-                $Type: 'UI.DataField',
                 Value: plant_plant,
             },
             {
@@ -113,6 +108,11 @@ annotate service.PurchaseRequisition with @(
                 $Type: 'UI.DataField',
                 Label: '{i18n>CreatedByUser}',
                 Value: createdByUser,
+            },
+            {
+                $Type: 'UI.DataField',
+                Value: plant.storageLocations.storageLocation,
+                Label: '{i18n>StorageLocations}',
             },
         ],
     },
@@ -262,7 +262,10 @@ annotate service.PurchaseRequisition with {
     )
 };
 
+
 annotate service.PurchaseRequisition with {
+
+
     PurchasingGroup @(
         Common.ValueList: {
             $Type         : 'Common.ValueListType',
@@ -299,7 +302,9 @@ annotate service.PurchaseRequisition with {
 annotate service.PurchaseRequisition {
     purchaseRequisition   @readonly;
     purchaseReqnItem      @readonly;
-    purchasingInfoRecords @readonly
+    purchasingInfoRecords @readonly;
+    releaseStatus         @readonly;
+    quantity              @UI.Placeholder: 'A positive decimal (e.g., 5.000)'
 }
 
 
@@ -635,4 +640,30 @@ annotate service.PurchaseRequisition with @(Capabilities: {
     Insertable: true,
     Updatable : true,
     Deletable : false
+});
+
+annotate service.StorageLocations with {
+    storageLocation @(
+        Common.ValueList               : {
+            $Type                       : 'Common.ValueListType',
+            CollectionPath              : 'StorageLocations',
+            Parameters                  : [{
+                $Type            : 'Common.ValueListParameterInOut',
+                LocalDataProperty: storageLocation,
+                ValueListProperty: 'storageLocation',
+            }, ],
+            PresentationVariantQualifier: 'vh_StorageLocations_storageLocation',
+        },
+        Common.ValueListWithFixedValues: true,
+        Common.Text                    : storageLocationDescription,
+    )
+};
+
+annotate service.StorageLocations with @(UI.PresentationVariant #vh_StorageLocations_storageLocation: {
+    $Type    : 'UI.PresentationVariantType',
+    SortOrder: [{
+        $Type     : 'Common.SortOrderType',
+        Property  : storageLocation,
+        Descending: false,
+    }, ],
 });
