@@ -17,8 +17,8 @@ sap.ui.define(
             "idEnterFullScreenOverflowToolbarButton"
           );
         this.oRouter = this.getOwnerComponent().getRouter();
-        this.oLayoutModel = this.getOwnerComponent().getModel(); // holds /layout + /actionButtonsInfo
 
+        this._ctxPathEncoded = "";
         this.oRouter
           .getRoute("detail")
           .attachPatternMatched(this._onObjectMatched, this);
@@ -139,35 +139,44 @@ sap.ui.define(
        * FCL layout handlers
        * ========================= */
 
-      _navWithLayout: function (sRoute, sLayout, mExtras) {
-        const params = Object.assign({}, mExtras);
-        if (this._ctxPathEncoded) {
-          params.ctxPath = this._ctxPathEncoded;
-        }
-        if (sLayout) {
-          params.layout = sLayout;
-        }
-        this.oRouter.navTo(sRoute, params);
-      },
-
       handleFullScreen: function () {
-        const abi = this.oLayoutModel.getProperty("/actionButtonsInfo");
-        const sNextLayout = abi && abi.midColumn && abi.midColumn.fullScreen;
-        this._navWithLayout("detail", sNextLayout, {}); // stay on detail, keep ctxPath
+        const abi =
+          this.getOwnerComponent()
+            .getModel()
+            .getProperty("/actionButtonsInfo") || {};
+        const nextLayout =
+          abi?.midColumn?.fullScreen || sap.f.LayoutType.MidColumnFullScreen;
+
+        this.oRouter.navTo("detail", {
+          ctxPath: this._ctxPathEncoded, // keep your ctxPath param
+          layout: nextLayout,
+        });
       },
 
       handleExitFullScreen: function () {
-        const abi = this.oLayoutModel.getProperty("/actionButtonsInfo");
-        const sNextLayout =
-          abi && abi.midColumn && abi.midColumn.exitFullScreen;
-        this._navWithLayout("detail", sNextLayout, {}); // stay on detail, keep ctxPath
+        const abi =
+          this.getOwnerComponent()
+            .getModel()
+            .getProperty("/actionButtonsInfo") || {};
+        const nextLayout =
+          abi?.midColumn?.exitFullScreen ||
+          sap.f.LayoutType.TwoColumnsMidExpanded;
+
+        this.oRouter.navTo("detail", {
+          ctxPath: this._ctxPathEncoded,
+          layout: nextLayout,
+        });
       },
 
       handleClose: function () {
-        const abi = this.oLayoutModel.getProperty("/actionButtonsInfo");
-        const sNextLayout = abi && abi.midColumn && abi.midColumn.closeColumn;
-        // go back to list; layout switches to the one suggested by FCL
-        this._navWithLayout("List", sNextLayout, {});
+        const abi =
+          this.getOwnerComponent()
+            .getModel()
+            .getProperty("/actionButtonsInfo") || {};
+        const nextLayout =
+          abi?.midColumn?.closeColumn || sap.f.LayoutType.OneColumn;
+
+        this.oRouter.navTo("List", { layout: nextLayout });
       },
 
       /* =========================

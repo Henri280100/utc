@@ -200,7 +200,6 @@
             <blocks>
               <m:Table
                 id="idMaterialTable"
-                items="{PurchaseRequisition>material}"
                 inset="false"
                 headerText="Material"
                 class="sapUiResponsiveMargin"
@@ -223,14 +222,15 @@
                     <m:Text text="Description (UI lang)" />
                   </m:Column>
                 </m:columns>
+                <!-- ONE row bound to the 1:1 nav 'material' -->
                 <m:items>
-                  <m:ColumnListItem>
+                  <m:ColumnListItem binding="{PurchaseRequisition>material}">
                     <m:cells>
+                      <!-- now relative to 'material' -->
                       <m:Text text="{PurchaseRequisition>material}" />
                       <m:Text text="{PurchaseRequisition>materialType}" />
                       <m:Text text="{PurchaseRequisition>industrySector}" />
                       <m:Text text="{PurchaseRequisition>baseUnit}" />
-                      <!-- pick description from materialDescriptions[] by UI language -->
                       <m:Text text="{
                         path: 'PurchaseRequisition>materialDescriptions',
                         targetType: 'any',
