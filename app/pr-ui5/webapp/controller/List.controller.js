@@ -5,9 +5,9 @@ sap.ui.define(
     "sap/ui/model/FilterOperator",
     "sap/ui/model/Sorter",
     "sap/m/MessageBox",
-    "sap/f/library"
+    "sap/f/library",
   ],
-  (Controller, Filter, FilterOperator, Sorter, MessageBox, fioriLibrary, LayoutType) => {
+  (Controller, Filter, FilterOperator, Sorter, MessageBox, fioriLibrary) => {
     "use strict";
 
     return Controller.extend("sap.ui.prui5.controller.List", {
@@ -15,6 +15,7 @@ sap.ui.define(
         this.oView = this.getView();
         this._bDescendingSort = false;
         this.oRequisitionTable = this.oView.byId("requisitionTable");
+        this.oRouter = this.getOwnerComponent().getRouter();
       },
 
       onSearchFieldBasicSearch: function (oEvent) {
@@ -46,10 +47,14 @@ sap.ui.define(
         oBinding.sort(oSorter);
       },
 
-      onColumnListItemPress: function () {
-        var oFCL = this.oView.getParent().getParent();
-
-        oFCL.setLayout(fioriLibrary.LayoutType.TwoColumnsMidExpanded);
+      onColumnListItemPress: function (oEvent) {
+        const ctx = oEvent.getSource().getBindingContext("PurchaseRequisition");
+        if (!ctx) return;
+        const path = ctx.getPath(); // e.g. "/PurchaseRequisition(...,IsActiveEntity=true)"
+        this.oRouter.navTo("detail", {
+          ctxPath: encodeURIComponent(path),
+          layout: sap.f.LayoutType.TwoColumnsMidExpanded,
+        });
       },
     });
   }

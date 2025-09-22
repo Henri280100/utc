@@ -42,7 +42,10 @@
   "cds": {
     "requires": {
       "html5-runtime": true,
-      "destinations": true
+      "destinations": true,
+      "[hybrid]": {
+        "db": "hana"
+      }
     },
     "odata": {
       "version": "v4"

@@ -27,7 +27,7 @@
       "PurchaseRequisition": {
         "type": "sap.ui.model.odata.v4.ODataModel",
         "dataSource": "PurchaseRequisitionsService",
-        
+
         "settings": {
           "synchronizationMode": "None",
           "operationMode": "Server",
@@ -61,29 +61,28 @@
       },
       "routes": [
         {
-          "pattern": "",
-          "name": "list",
-          "target": [
-            "list",
-            "detail"
-          ]
+          "pattern": ":layout:",
+          "name": "List",
+          "target": ["List", "detail"]
         },
         {
-          "pattern": "detail/{PurchasingInfoRecords}",
+          "pattern": "detail/{ctxPath}/{layout}",
           "name": "detail",
-          "target": [
-            "detail"
-          ]
+          "target": ["List", "detail"]
         }
       ],
       "targets": {
-        "list": {
-          "name": "List",
-          "viewLevel": 1
+        "List": {
+          "viewName": "List",
+          "viewLevel": 1,
+          "viewId": "listView",
+          "controlAggregation": "beginColumnPages"
         },
         "detail": {
-          "name": "Detail",
-          "viewLevel": 2
+          "viewName": "Detail",
+          "viewLevel": 2,
+          "viewId": "detailView",
+          "controlAggregation": "midColumnPages"
         }
       }
     }

@@ -1,154 +1,266 @@
 <mvc:View
-	controllerName="sap.ui.prui5.controller.Detail"
-	xmlns="sap.uxap"
-	xmlns:m="sap.m"
-	xmlns:form="sap.ui.layout.form"
-	xmlns:mvc="sap.ui.core.mvc"
+  controllerName="sap.ui.prui5.controller.Detail"
+  xmlns="sap.uxap"
+  xmlns:m="sap.m"
+  xmlns:mvc="sap.ui.core.mvc"
 >
-	<ObjectPageLayout
-		id="idObjectPageLayout"
-		showTitleInHeaderContent="true"
-		isChildPage="true"
-		upperCaseAnchorBar="false"
-	>
-		<headerTitle>
-			<ObjectPageDynamicHeaderTitle>
-				<actions>
-					<m:ToggleButton
-						text="Approved"
-						type="Emphasized"
-						press=".onApproveToggleButtonPress"
-					/>
-					<m:ToggleButton
-						text="Rejected"
-						type="Emphasized"
-						press=".onRejectToggleButtonPress"
-					/>
-					<m:ToggleButton
-						text="Edit"
-						type="Emphasized"
-						press=".onEditToggleButtonPress"
-					/>
-					<m:Button
-						text="Delete"
-						type="Transparent"
-					/>
-					<m:Button
-						text="Copy"
-						type="Transparent"
-					/>
-					<m:Button
-						icon="sap-icon://action"
-						type="Transparent"
-					/>
-				</actions>
-			</ObjectPageDynamicHeaderTitle>
-		</headerTitle>
-		<headerContent>
-			<m:FlexBox
-				wrap="Wrap"
-				fitContainer="true"
-				alignItems="Stretch"
-			>
-				<m:Avatar
-					displaySize="L"
-					displayShape="Square"
-					class="sapUiTinyMarginEnd"
-				/>
-				<m:VBox
-					justifyContent="Center"
-					class="sapUiSmallMarginEnd"
-				>
-					<m:Label text="Purchase Requisition" />
-				</m:VBox>
-				<m:VBox
-					justifyContent="Center"
-					class="sapUiSmallMarginEnd"
-				>
-					<m:Label text="Reqn Items" />
-				</m:VBox>
-				<m:VBox
-					justifyContent="Center"
-					class="sapUiSmallMarginEnd"
-				>
-					<m:Label text="Status" />
-				</m:VBox>
-			</m:FlexBox>
-		</headerContent>
-		<sections>
-			<ObjectPageSection title="General Information">
-				<subSections>
-					<ObjectPageSubSection>
-						<blocks>
-							<form:SimpleForm
-								maxContainerCols="2"
-								editable="false"
-								layout="ResponsiveGridLayout"
-								labelSpanL="12"
-								labelSpanM="12"
-								emptySpanL="0"
-								emptySpanM="0"
-								columnsL="1"
-								columnsM="1"
-							>
-								<form:content>
-									<m:Label text="Purchase Requisition ID" />
-									<m:Label text="Material Desc" />
-									<m:Label text="Quantity" />
-									<m:Label text="Delivery Date" />
-									<m:Label text="Status" />
-								</form:content>
-							</form:SimpleForm>
-						</blocks>
-					</ObjectPageSubSection>
-				</subSections>
-			</ObjectPageSection>
-			<ObjectPageSection title="Suppliers">
-				<subSections>
-					<ObjectPageSubSection>
-						<blocks>
-							<m:Table
-								id="idPurchasingInfoRecordsTable"
-								growing="true"
-								items="{
-								path: 'PurchaseRequisition>/PurchasingInfoRecord',
-								parameters: {
-									expand: 'supplier($select=supplierName,country_code)'
-								},
-								events: {
-									dataReceived: '.onTableDataReceived'
-								}
-							}"
-							>
-								<m:columns>
-									<m:Column>
-										<m:Label text="Supplier Name" />
-									</m:Column>
-									<m:Column>
-										<m:Label text="Country" />
-									</m:Column>
-								</m:columns>
-								<m:items>
-									<m:ColumnListItem>
-										<m:ObjectIdentifier
-											text="{PurchaseRequisition>supplier/supplierName}" />
-										<m:ObjectIdentifier
-											text="{PurchaseRequisition>supplier/country_code}" />
-
-									</m:ColumnListItem>
-								</m:items>
-							</m:Table>
-						</blocks>
-					</ObjectPageSubSection>
-				</subSections>
-			</ObjectPageSection>
-		</sections>
-		<footer>
-			<m:OverflowToolbar>
-				<m:ToolbarSpacer />
-				<m:Button type="Accept" text="Save" />
-				<m:Button type="Reject" text="Cancel" />
-			</m:OverflowToolbar>
-		</footer>
-	</ObjectPageLayout>
+  <ObjectPageLayout
+    id="idObjectPageLayout"
+    showTitleInHeaderContent="true"
+    alwaysShowContentHeader="false"
+    preserveHeaderStateOnScroll="false"
+    headerContentPinnable="true"
+    isChildPage="true"
+    upperCaseAnchorBar="false"
+    showFooter="true"
+  >
+    <!-- ===== Header ===== -->
+    <headerTitle>
+      <ObjectPageDynamicHeaderTitle>
+        <expandedHeading>
+          <m:ObjectHeader title="Purchase Requisition {PurchaseRequisition>purchaseRequisition}">
+            <m:attributes>
+              <m:ObjectAttribute
+                title="PR Number"
+                text="{PurchaseRequisition>purchaseRequisition}"
+              />
+              <m:ObjectAttribute
+                title="Item"
+                text="{PurchaseRequisition>purchaseReqnItem}"
+              />
+              <m:ObjectAttribute
+                title="Material"
+                text="{PurchaseRequisition>material/material}"
+              />
+              <m:ObjectAttribute
+                title="Plant"
+                text="{PurchaseRequisition>plant/plant}"
+              />
+              <m:ObjectAttribute
+                title="Quantity"
+                text="{= ${PurchaseRequisition>quantity} + ' ' + ${PurchaseRequisition>baseUnit} }"
+              />
+              <m:ObjectAttribute
+                title="Delivery Date"
+                text="{
+                  path: 'PurchaseRequisition>deliveryDate',
+                  type: 'sap.ui.model.odata.type.Date',
+                  formatOptions: {
+                    style: 'medium'
+                  }
+                }"
+              />
+              <m:ObjectAttribute
+                title="Purchase Group"
+                text="{= ${PurchaseRequisition>PurchasingGroup/purchasingGroup} + ' - ' + ${PurchaseRequisition>PurchasingGroup/purchasingGroupDescription} }"
+              />
+              <m:ObjectAttribute
+                title="Storage Location"
+                text="{PurchaseRequisition>storageLocation}"
+              />
+              <m:ObjectAttribute
+                title="Release Status"
+                text="{PurchaseRequisition>releaseStatus}"
+              />
+            </m:attributes>
+          </m:ObjectHeader>
+        </expandedHeading>
+        <navigationActions>
+          <m:OverflowToolbarButton
+            type="Transparent"
+            icon="sap-icon://full-screen"
+            press="handleFullScreen"
+            id="idEnterFullScreenOverflowToolbarButton"
+            tooltip="Enter Full Screen Mode"
+            visible="{= ${/actionButtonsInfo/midColumn/fullScreen} !== null }"
+          />
+          <m:OverflowToolbarButton
+            type="Transparent"
+            icon="sap-icon://exit-full-screen"
+            press="handleExitFullScreen"
+            id="idExitFullScreenOverflowToolbarButton"
+            tooltip="Exit Full Screen Mode"
+            visible="{= ${/actionButtonsInfo/midColumn/exitFullScreen} !== null }"
+          />
+          <m:OverflowToolbarButton
+            type="Transparent"
+            icon="sap-icon://decline"
+            press="handleClose"
+            tooltip="Close middle column"
+            visible="{= ${/actionButtonsInfo/midColumn/closeColumn} !== null }"
+          />
+        </navigationActions>
+      </ObjectPageDynamicHeaderTitle>
+    </headerTitle>
+    <!-- ===== Sections ===== -->
+    <sections>
+      <!-- Supplier (from first Purchasing Info Record) -->
+      <ObjectPageSection
+        titleUppercase="false"
+        title="Supplier"
+      >
+        <subSections>
+          <ObjectPageSubSection>
+            <blocks>
+              <m:VBox class="sapUiSmallMargin">
+                <m:HBox>
+                  <m:Label
+                    text="Supplier:"
+                    width="12rem"
+                  />
+                  <m:Text text="{
+                    path: 'PurchaseRequisition>purchasingInfoRecords',
+                    targetType: 'any',
+                    formatter: '.formatter.pickFirstSupplierId'
+                  }" />
+                </m:HBox>
+                <m:HBox>
+                  <m:Label
+                    text="Supplier Name:"
+                    width="12rem"
+                  />
+                  <m:Text text="{
+                    path: 'PurchaseRequisition>purchasingInfoRecords',
+                    targetType: 'any',
+                    formatter: '.formatter.pickFirstSupplierName'
+                  }" />
+                </m:HBox>
+                <m:HBox>
+                  <m:Label
+                    text="Address:"
+                    width="12rem"
+                  />
+                  <m:Text text="{
+                    path: 'PurchaseRequisition>purchasingInfoRecords',
+                    targetType: 'any',
+                    formatter: '.formatter.pickFirstSupplierAddress'
+                  }" />
+                </m:HBox>
+              </m:VBox>
+            </blocks>
+          </ObjectPageSubSection>
+        </subSections>
+      </ObjectPageSection>
+      <!-- Account Assignment (to-many) -->
+      <ObjectPageSection
+        titleUppercase="false"
+        title="Account Assignment"
+      >
+        <subSections>
+          <ObjectPageSubSection>
+            <blocks>
+              <m:Table
+                id="idAccountAssignmentTable"
+                items="{PurchaseRequisition>accountAssignment}"
+                inset="false"
+                headerText="Account Assignment"
+                class="sapUiResponsiveMargin"
+                width="100%"
+              >
+                <m:columns>
+                  <m:Column>
+                    <m:Text text="AA" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="Category" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="G/L" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="Cost Center" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="Order" />
+                  </m:Column>
+                </m:columns>
+                <m:items>
+                  <m:ColumnListItem>
+                    <m:cells>
+                      <m:Text text="{PurchaseRequisition>acctAssignment}" />
+                      <m:Text text="{PurchaseRequisition>acctAssignmentCategory}" />
+                      <m:Text text="{PurchaseRequisition>glAccount}" />
+                      <m:Text text="{PurchaseRequisition>costCenter}" />
+                      <m:Text text="{PurchaseRequisition>order}" />
+                    </m:cells>
+                  </m:ColumnListItem>
+                </m:items>
+              </m:Table>
+            </blocks>
+          </ObjectPageSubSection>
+        </subSections>
+      </ObjectPageSection>
+      <!-- Material (1:1 assoc) -->
+      <ObjectPageSection
+        titleUppercase="false"
+        title="Material"
+      >
+        <subSections>
+          <ObjectPageSubSection>
+            <blocks>
+              <m:Table
+                id="idMaterialTable"
+                items="{PurchaseRequisition>material}"
+                inset="false"
+                headerText="Material"
+                class="sapUiResponsiveMargin"
+                width="100%"
+              >
+                <m:columns>
+                  <m:Column>
+                    <m:Text text="Material" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="Type" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="Industry" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="Base Unit" />
+                  </m:Column>
+                  <m:Column>
+                    <m:Text text="Description (UI lang)" />
+                  </m:Column>
+                </m:columns>
+                <m:items>
+                  <m:ColumnListItem>
+                    <m:cells>
+                      <m:Text text="{PurchaseRequisition>material}" />
+                      <m:Text text="{PurchaseRequisition>materialType}" />
+                      <m:Text text="{PurchaseRequisition>industrySector}" />
+                      <m:Text text="{PurchaseRequisition>baseUnit}" />
+                      <!-- pick description from materialDescriptions[] by UI language -->
+                      <m:Text text="{
+                        path: 'PurchaseRequisition>materialDescriptions',
+                        targetType: 'any',
+                        formatter: '.formatter.pickDescriptionByUILang'
+                      }" />
+                    </m:cells>
+                  </m:ColumnListItem>
+                </m:items>
+              </m:Table>
+            </blocks>
+          </ObjectPageSubSection>
+        </subSections>
+      </ObjectPageSection>
+    </sections>
+    <!-- footer untouched -->
+    <footer>
+      <m:OverflowToolbar>
+        <m:ToolbarSpacer />
+        <m:Button
+          text="Accept"
+          type="Accept"
+          press=".onAcceptButtonPress"
+        />
+        <!-- keep your buttons or adapt visibility if needed -->
+        <m:Button
+          text="Cancel"
+          type="Reject"
+          press=".onCancelButtonPress"
+        />
+      </m:OverflowToolbar>
+    </footer>
+  </ObjectPageLayout>
 </mvc:View>
