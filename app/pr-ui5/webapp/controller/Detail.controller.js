@@ -3,8 +3,9 @@ sap.ui.define(
     "sap/ui/core/mvc/Controller",
     "sap/m/MessageToast",
     "sap/ui/prui5/models/formatter",
+    "sap/f/library",
   ],
-  function (Controller, MessageToast, formatter) {
+  function (Controller, MessageToast, formatter, fLibrary) {
     "use strict";
 
     return Controller.extend("sap.ui.prui5.controller.Detail", {
@@ -124,14 +125,6 @@ sap.ui.define(
               },
             },
           },
-          events: {
-            dataRequested: () => {
-              // optional: this.getView().setBusy(true);
-            },
-            dataReceived: () => {
-              // optional: this.getView().setBusy(false);
-            },
-          },
         });
       },
 
@@ -160,7 +153,7 @@ sap.ui.define(
             .getProperty("/actionButtonsInfo") || {};
         const nextLayout =
           abi?.midColumn?.exitFullScreen ||
-          sap.f.LayoutType.TwoColumnsMidExpanded;
+          fLibrary.LayoutType.TwoColumnsMidExpanded;
 
         this.oRouter.navTo("detail", {
           ctxPath: this._ctxPathEncoded,
@@ -174,7 +167,7 @@ sap.ui.define(
             .getModel()
             .getProperty("/actionButtonsInfo") || {};
         const nextLayout =
-          abi?.midColumn?.closeColumn || sap.f.LayoutType.OneColumn;
+          abi?.midColumn?.closeColumn || fLibrary.LayoutType.OneColumn;
 
         this.oRouter.navTo("List", { layout: nextLayout });
       },

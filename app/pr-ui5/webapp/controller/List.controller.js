@@ -5,9 +5,8 @@ sap.ui.define(
     "sap/ui/model/FilterOperator",
     "sap/ui/model/Sorter",
     "sap/m/MessageBox",
-    "sap/f/library",
   ],
-  (Controller, Filter, FilterOperator, Sorter, MessageBox, fioriLibrary) => {
+  (Controller, Filter, FilterOperator, Sorter, MessageBox) => {
     "use strict";
 
     return Controller.extend("sap.ui.prui5.controller.List", {
