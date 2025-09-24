@@ -11,14 +11,7 @@ sap.ui.define(
     return Controller.extend("sap.ui.prui5.controller.Detail", {
       formatter: formatter,
       onInit: function () {
-        var oExitButton = this.getView().byId(
-            "idExitFullScreenOverflowToolbarButton"
-          ),
-          oEnterButton = this.getView().byId(
-            "idEnterFullScreenOverflowToolbarButton"
-          );
-        this.oRouter = this.getOwnerComponent().getRouter();
-
+        this.oRouter = this.getOwnerComponent().getRouter();// to focus button after layout change
         this._ctxPathEncoded = "";
         this.oRouter
           .getRoute("detail")
@@ -27,16 +20,6 @@ sap.ui.define(
           .getRoute("List")
           .attachPatternMatched(this._onObjectMatched, this);
 
-        [oExitButton, oEnterButton].forEach(function (oButton) {
-          oButton.addEventDelegate({
-            onAfterRendering: function () {
-              if (this.bFocusFullScreenButton) {
-                this.bFocusFullScreenButton = false;
-                oButton.focus();
-              }
-            }.bind(this),
-          });
-        }, this);
       },
 
       _onObjectMatched: function (oEvent) {
@@ -133,10 +116,11 @@ sap.ui.define(
        * ========================= */
 
       handleFullScreen: function () {
+
         const abi =
           this.getOwnerComponent()
             .getModel()
-            .getProperty("/actionButtonsInfo") || {};
+            .getProperty("/actionButtonsInfo/midColumn/fullScreen") || {};
         const nextLayout =
           abi?.midColumn?.fullScreen || sap.f.LayoutType.MidColumnFullScreen;
 
@@ -147,10 +131,11 @@ sap.ui.define(
       },
 
       handleExitFullScreen: function () {
+        this.bFocusFullScreenButton = true;
         const abi =
           this.getOwnerComponent()
             .getModel()
-            .getProperty("/actionButtonsInfo") || {};
+            .getProperty("/actionButtonsInfo/midColumn/exitFullScreen") || {};
         const nextLayout =
           abi?.midColumn?.exitFullScreen ||
           fLibrary.LayoutType.TwoColumnsMidExpanded;
@@ -165,7 +150,7 @@ sap.ui.define(
         const abi =
           this.getOwnerComponent()
             .getModel()
-            .getProperty("/actionButtonsInfo") || {};
+            .getProperty("/actionButtonsInfo/midColumn/closeColumn") || {};
         const nextLayout =
           abi?.midColumn?.closeColumn || fLibrary.LayoutType.OneColumn;
 

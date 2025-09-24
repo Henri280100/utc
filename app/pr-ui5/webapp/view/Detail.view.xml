@@ -1,4 +1,5 @@
 <mvc:View
+  displayBlock="true"
   controllerName="sap.ui.prui5.controller.Detail"
   xmlns="sap.uxap"
   xmlns:m="sap.m"
@@ -69,23 +70,23 @@
           <m:OverflowToolbarButton
             type="Transparent"
             icon="sap-icon://full-screen"
-            press="handleFullScreen"
+            press=".handleFullScreen"
             id="idEnterFullScreenOverflowToolbarButton"
             tooltip="Enter Full Screen Mode"
-            visible="{= ${/actionButtonsInfo/midColumn/fullScreen} !== null }"
+            visible="{= ${/actionButtonsInfo/midColumn/fullScreen} ? true : false }"
           />
           <m:OverflowToolbarButton
             type="Transparent"
             icon="sap-icon://exit-full-screen"
-            press="handleExitFullScreen"
+            press=".handleExitFullScreen"
             id="idExitFullScreenOverflowToolbarButton"
             tooltip="Exit Full Screen Mode"
-            visible="{= ${/actionButtonsInfo/midColumn/exitFullScreen} !== null }"
+            visible="{= ${/actionButtonsInfo/midColumn/exitFullScreen} ? true : false }"
           />
           <m:OverflowToolbarButton
             type="Transparent"
             icon="sap-icon://decline"
-            press="handleClose"
+            press=".handleClose"
             tooltip="Close middle column"
             visible="{= ${/actionButtonsInfo/midColumn/closeColumn} !== null }"
           />

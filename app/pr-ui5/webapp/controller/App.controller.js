@@ -38,10 +38,11 @@ sap.ui.define(
 
       _updateUIState: function () {
         const uiState = this._fclHelper.getCurrentUIState();
+
         this.oLayoutModel.setProperty("/layout", uiState.layout);
         this.oLayoutModel.setProperty(
           "/actionButtonsInfo",
-          uiState.actionButtonsInfo || {}
+          uiState.actionButtonsInfo
         );
       },
 
@@ -61,9 +62,7 @@ sap.ui.define(
 
         // if user clicked an arrow, re-nav to the same route with the new layout
         if (bArrow && this._currentRouteName) {
-          const mNav = Object.assign({}, this._currentArgs, {
-            layout: sLayout,
-          });
+          const mNav = { ...this._currentArgs, layout: sLayout,};
           this.oRouter.navTo(this._currentRouteName, mNav, true); // replace hash
         }
       },
