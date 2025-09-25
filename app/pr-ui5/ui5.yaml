@@ -1,6 +1,6 @@
 specVersion: "4.0"
 metadata:
-  name: tutorial.fcl
+  name: sap.ui.prui5
 type: application
 framework:
   name: OpenUI5
@@ -11,6 +11,10 @@ framework:
     - name: sap.f
     - name: sap.uxap
     - name: themelib_sap_horizon
+builder:
+  customTasks:
+    - name: ui5-tooling-transpile-task
+      afterTask: replaceVersion
 
 server:
   customMiddleware:

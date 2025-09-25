@@ -6,6 +6,9 @@
     "start": "ui5 serve -o index.html"
   },
   "devDependencies": {
-    "ui5-middleware-simpleproxy": "^3.4.3"
+    "@types/openui5": "^1.140.0",
+    "typescript": "^5.9.2",
+    "ui5-middleware-simpleproxy": "^3.4.3",
+    "ui5-tooling-transpile": "^3.9.2"
   }
 }
