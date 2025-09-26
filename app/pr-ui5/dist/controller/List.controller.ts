@@ -9,6 +9,7 @@ import Router from "sap/ui/core/routing/Router";
 import View from "sap/ui/core/mvc/View";
 import Table from "sap/m/Table";
 import ListBinding from "sap/ui/model/ListBinding";
+import UIComponent from "sap/ui/core/UIComponent";
 
 export default class ListController extends Controller {
   private oView: any;
@@ -19,7 +20,7 @@ export default class ListController extends Controller {
   public onInit(): void {
     // View & Router
     const view = this.getView();
-    const comp = this.getOwnerComponent();
+    const comp = this.getOwnerComponent() as UIComponent;
     if (!view || !comp) return;
 
     this.oView = view as View;

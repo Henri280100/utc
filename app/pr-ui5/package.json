@@ -12,6 +12,7 @@
     "ui5-tooling-transpile": "^3.9.2"
   },
   "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@ui5/ts-interface-generator": "^0.10.3"
   }
 }

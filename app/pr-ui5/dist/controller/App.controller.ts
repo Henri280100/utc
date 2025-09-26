@@ -1,12 +1,17 @@
 // webapp/controller/App.controller.ts
 import Controller from "sap/ui/core/mvc/Controller";
-import FlexibleColumnLayout from "sap/f/FlexibleColumnLayout";
-import FlexibleColumnLayoutSemanticHelper from "sap/f/FlexibleColumnLayoutSemanticHelper";
+import FlexibleColumnLayout, {
+  FlexibleColumnLayout$StateChangeEvent,
+} from "sap/f/FlexibleColumnLayout";
+import FlexibleColumnLayoutSemanticHelper, {
+  UIState,
+} from "sap/f/FlexibleColumnLayoutSemanticHelper";
 import * as fLibrary from "sap/f/library";
-import Event from "sap/ui/base/Event";
+import UI5Event from "sap/ui/base/Event";
 import Router from "sap/ui/core/routing/Router";
 import JSONModel from "sap/ui/model/json/JSONModel";
 import UIComponent from "sap/ui/core/UIComponent";
+import { Route$PatternMatchedEvent } from "sap/ui/core/routing/Route";
 
 type LayoutType = fLibrary.LayoutType;
 
@@ -24,8 +29,8 @@ export default class AppController extends Controller {
   private _currentArgs: Record<string, any> = {};
 
   /** Bound handlers so we can detach on exit */
-  private _onRouteMatchedBound!: (e: Event) => void;
-  private _onFclStateChangeBound!: (e: Event) => void;
+  private _onRouteMatchedBound!: (e: UI5Event) => void;
+  private _onFclStateChangeBound!: (e: UI5Event) => void;
 
   public onInit(): void {
     // Router & layout model from Component
@@ -38,8 +43,10 @@ export default class AppController extends Controller {
     // FCL control + helper
     this._oFCL = this.byId("idFlexibleColumnLayout") as FlexibleColumnLayout;
     const settings = {
-      defaultTwoColumnLayoutType: fLibrary.LayoutType.TwoColumnsMidExpanded as LayoutType,
-      defaultThreeColumnLayoutType: fLibrary.LayoutType.ThreeColumnsMidExpanded as LayoutType
+      defaultTwoColumnLayoutType: fLibrary.LayoutType
+        .TwoColumnsMidExpanded as LayoutType,
+      defaultThreeColumnLayoutType: fLibrary.LayoutType
+        .ThreeColumnsMidExpanded as LayoutType,
     };
     this._fclHelper = FlexibleColumnLayoutSemanticHelper.getInstanceFor(
       this._oFCL,
@@ -50,7 +57,8 @@ export default class AppController extends Controller {
     this._updateUIState();
 
     // Attach handlers (keep references to detach later)
-    this._onFclStateChangeBound = this.onFlexibleColumnLayoutStateChange.bind(this);
+    this._onFclStateChangeBound =
+      this.onFlexibleColumnLayoutStateChange.bind(this);
     this._oFCL.attachStateChange(this._onFclStateChangeBound);
 
     this._onRouteMatchedBound = this.onRouteMatched.bind(this);
@@ -61,20 +69,26 @@ export default class AppController extends Controller {
   private _updateUIState(): void {
     const uiState = this._fclHelper.getCurrentUIState();
     this.oLayoutModel.setProperty("/layout", uiState.layout);
-    this.oLayoutModel.setProperty("/actionButtonsInfo", uiState.actionButtonsInfo);
+    this.oLayoutModel.setProperty(
+      "/actionButtonsInfo",
+      uiState.actionButtonsInfo
+    );
   }
 
   /** Remember route + args for arrow navigation */
-  public onRouteMatched(oEvent: Event): void {
+  public onRouteMatched(oEvent: Route$PatternMatchedEvent): void {
     this._currentRouteName = (oEvent.getParameter("name") as string) || "";
-    this._currentArgs = (oEvent.getParameter("arguments") as Record<string, any>) || {};
+    this._currentArgs =
+      (oEvent.getParameter("arguments") as Record<string, any>) || {};
   }
 
   /** When user clicks FCL arrows, keep model in sync and re-nav with new layout */
-  public onFlexibleColumnLayoutStateChange(oEvent: Event): void {
-    const bArrow = !!oEvent.getParameter("isNavigationArrow");
-    const sLayout = oEvent.getParameter("layout") as LayoutType;
-    const oABI = oEvent.getParameter("actionButtonsInfo") as Record<string, any>;
+  public onFlexibleColumnLayoutStateChange(oEvent: any): void {
+    const bArrow = oEvent.getParameter(
+      "isNavigationArrow"
+    ) as FlexibleColumnLayout$StateChangeEvent;
+    const sLayout = oEvent.getParameter("layout") as UIState;
+    const oABI = oEvent.getParameter("actionButtonsInfo") as UIState;
 
     // keep model in sync (used by buttons’ visibility + handlers)
     this.oLayoutModel.setProperty("/layout", sLayout);

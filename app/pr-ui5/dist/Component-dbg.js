@@ -3,6 +3,7 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "sap/f/
 
   class Component extends UIComponent {
     static metadata = {
+      interfaces: ["sap.ui.core.IAsyncContentCreation"],
       manifest: "json"
     };
 

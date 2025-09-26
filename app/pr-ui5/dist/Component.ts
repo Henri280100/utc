@@ -4,11 +4,15 @@ import JSONModel from "sap/ui/model/json/JSONModel";
 import * as fLibrary from "sap/f/library";
 import Event from "sap/ui/base/Event";
 import Router from "sap/ui/core/routing/Router";
+import { Route$PatternMatchedEvent } from "sap/ui/core/routing/Route";
 
 type LayoutType = fLibrary.LayoutType;
 
 export default class Component extends UIComponent {
-  public static metadata = { manifest: "json" };
+  public static metadata = {
+    interfaces: ["sap.ui.core.IAsyncContentCreation"],
+    manifest: "json",
+  };
 
   /** default/unnamed model → {/layout}, {/actionButtonsInfo} */
   private _oLayoutModel!: JSONModel;
@@ -39,9 +43,9 @@ export default class Component extends UIComponent {
   }
 
   /** Keep /layout aligned with route arg or fallback */
-  private _onBeforeRouteMatched(oEvent: Event): void {
+  private _onBeforeRouteMatched(oEvent: Route$PatternMatchedEvent): void {
     const args =
-      (oEvent.getParameter("arguments") as Record<string, any>) || {};
+      (oEvent.getParameter("arguments") as Record<string, string>) || {};
     const current = this._oLayoutModel.getProperty("/layout") as LayoutType;
     const next: LayoutType =
       (args.layout as LayoutType) || current || fLibrary.LayoutType.OneColumn;
@@ -52,7 +56,7 @@ export default class Component extends UIComponent {
   }
 
   /** Remember route + args for arrow navigation updates */
-  private _onRouteMatched(oEvent: Event): void {
+  private _onRouteMatched(oEvent: Route$PatternMatchedEvent): void {
     this._currentRouteName = oEvent.getParameter("name") as string | undefined;
     this._currentArgs =
       (oEvent.getParameter("arguments") as Record<string, any>) || {};

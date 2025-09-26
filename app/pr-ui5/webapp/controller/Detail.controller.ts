@@ -7,6 +7,7 @@ import JSONModel from "sap/ui/model/json/JSONModel";
 import Event from "sap/ui/base/Event";
 import UIComponent from "sap/ui/core/UIComponent";
 import View from "sap/ui/core/mvc/View";
+import { Route$BeforeMatchedEvent } from "sap/ui/core/routing/Route";
 
 export default class DetailController extends Controller {
   private oRouter!: Router;
@@ -35,7 +36,7 @@ export default class DetailController extends Controller {
       .attachPatternMatched(this._onObjectMatched, this);
   }
 
-  private _onObjectMatched(oEvent: Event) {
+  private _onObjectMatched(oEvent: Route$BeforeMatchedEvent) {
     const args =
       (oEvent.getParameter("arguments") as Record<string, string>) || {};
     const ctxPathEncoded = args.ctxPath || "";

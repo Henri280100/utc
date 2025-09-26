@@ -41,7 +41,7 @@ sap.ui.define(["sap/ui/core/mvc/Controller", "sap/f/FlexibleColumnLayoutSemantic
       this._currentArgs = oEvent.getParameter("arguments") || {};
     },
     /** When user clicks FCL arrows, keep model in sync and re-nav with new layout */onFlexibleColumnLayoutStateChange: function _onFlexibleColumnLayoutStateChange(oEvent) {
-      const bArrow = !!oEvent.getParameter("isNavigationArrow");
+      const bArrow = oEvent.getParameter("isNavigationArrow");
       const sLayout = oEvent.getParameter("layout");
       const oABI = oEvent.getParameter("actionButtonsInfo");
 

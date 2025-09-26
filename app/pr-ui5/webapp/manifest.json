@@ -1,7 +1,7 @@
 {
   "_version": "1.38.0",
   "sap.app": {
-    "id": "prui5",
+    "id": "sap.ui.prui5",
     "type": "application",
     "applicationVersion": {
       "version": "1.0.0"
