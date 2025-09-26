@@ -1,5 +1,5 @@
 {
-  "name": "ui5.walkthrough",
+  "name": "sap.ui5.prui5",
   "version": "1.0.0",
   "description": "The Purchase Requisition UI5 application",
   "scripts": {
@@ -10,5 +10,8 @@
     "typescript": "^5.9.2",
     "ui5-middleware-simpleproxy": "^3.4.3",
     "ui5-tooling-transpile": "^3.9.2"
+  },
+  "dependencies": {
+    "@ui5/ts-interface-generator": "^0.10.3"
   }
 }

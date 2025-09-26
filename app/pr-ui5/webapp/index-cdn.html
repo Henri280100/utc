@@ -1,20 +1,28 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<meta charset="utf-8">
-	<title>Purchase Requisition</title>
-	<script
-		id="sap-ui-bootstrap"
-		src="https://sdk.openui5.org/1.132.1/resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_horizon"
-		data-sap-ui-compat-version="edge"
-		data-sap-ui-async="true"
-		data-sap-ui-on-init="module:sap/ui/core/ComponentSupport"
-		data-sap-ui-resource-roots='{
-			"sap.ui.prui5": "./"
-		}'>
-	</script>
-</head>
-<body class="sapUiBody" id="content">
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Purchase Requisition</title>
+    <script
+      id="sap-ui-bootstrap"
+      src="https://sdk.sapui5.org/1.132.1/resources/sap-ui-core.js"
+      data-sap-ui-theme="sap_horizon"
+      data-sap-ui-compat-version="edge"
+      data-sap-ui-async="true"
+      data-sap-ui-on-init="module:sap/ui/core/ComponentSupport"
+      data-sap-ui-resource-roots='{
+			"prui5": "./"
+		}'
+    ></script>
+  </head>
+  <body class="sapUiBody sapUiSizeCompact">
+    <div
+      data-sap-ui-component
+      data-name="prui5"
+      data-height="100%"
+      data-id="container"
+      data-settings='{"id" : "prui5"}'
+      style="height: 100%"
+    ></div>
+  </body>
 </html>

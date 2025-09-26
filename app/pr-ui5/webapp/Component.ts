@@ -8,7 +8,10 @@ import Router from "sap/ui/core/routing/Router";
 type LayoutType = fLibrary.LayoutType;
 
 export default class Component extends UIComponent {
-  public static metadata = { manifest: "json" };
+  public static metadata = {
+    interfaces: ["sap.ui.core.IAsyncContentCreation"],
+    manifest: "json",
+  };
 
   /** default/unnamed model → {/layout}, {/actionButtonsInfo} */
   private _oLayoutModel!: JSONModel;

@@ -1,0 +1,497 @@
+/* ================================== */
+/* CSS for control sap.f/ShellBar     */
+/* Horizon High Contrast White theme  */
+/* ================================== */
+
+.alwaysCozyOverrideByParent(~"sapFShellBar");
+
+.sapFShellBar {
+	box-shadow: inset 0 -0.0625rem 0 0 var(--sapShell_BorderColor);
+
+	.sapFShellBarOTB {
+		background-color: transparent;
+	}
+}
+
+.sapFShellBar.sapFShellBarFCLFPHeader,
+.sapMPageHeader .sapFShellBar {
+	box-shadow: var(--sapShell_Shadow);
+}
+
+.sapFButtonNotifications[data-notifications],
+.sapFShellBarOverflowButton[data-notifications] {
+
+	&::after {
+		line-height: 1rem;
+		background: var(--sapGroup_ContentBackground);
+		border: solid 1px var(--sapGroup_ContentBorderColor);
+		color: var(--sapContent_ForegroundTextColor);
+	}
+}
+
+.sapFShellBar .CPImage,
+ .sapFShellBar .sapMIBar.sapMTB .CPImage {
+
+	.color1 {
+		stop-color: var(--sapContent_IconColor);
+	}
+
+	.color2 {
+		stop-color: var(--sapContent_IconColor);
+	}
+}
+
+html.sap-desktop .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed{
+	background-color: var(--sapButton_Attention_Active_Background);
+}
+
+.sapFShellBarSizeLargeDesktop,
+.sapFShellBarSizeExtraLargeDesktop {
+	padding: 0 3rem;
+}
+
+.sapFShellBarSizeExtraLargeDesktop.sapFShellBar .sapFShellBarSearchWrap .sapMBtn:not(.sapFShellBarSearchCancelButton) {
+	right: 0;
+}
+
+.sapFShellBarSizeDesktop {
+	padding: 0 2rem;
+}
+
+.sapFShellBar {
+	background: var(--sapShellColor);
+	height: 3.25rem;
+	box-shadow: inset 0 -0.0625rem 0 0 var(--sapShell_BorderColor);
+
+	.sapFShellBarOTB.sapMIBar.sapMTB {
+		height: 3.25rem;
+	}
+
+	/* Copilot */
+	.CPImage,
+	& .sapMIBar.sapMTB .CPImage {
+
+		&::after {
+			position: absolute;
+			content: '';
+			left: 3px;
+			right: 3px;
+			top: 3px;
+			bottom: 3px;
+			outline: none;
+			pointer-events: none;
+			border-radius: 0.5rem;
+		}
+
+		&:focus {
+			border-radius: 0.5rem;
+			outline: none;
+			background-color: var(--sapShell_Active_Background);
+			color: var(--sapShell_Active_TextColor);
+
+			&::after {
+				box-shadow: var(--sapContent_Selected_Shadow);
+			}
+		}
+
+		&:hover:not(:focus) {
+			background: var(--sapShell_Hover_Background);
+			border-radius: 0.5rem;
+
+			&::after {
+				box-shadow: var(--sapContent_Interaction_Shadow);
+			}
+		}
+	}
+
+	&.sapMPageHeader .sapMIBar,
+	.sapMIBar {
+		height: 3.25rem;
+	}
+
+	.sapMBtn:hover > .sapMBtnHoverable.sapMToggleBtnPressed:not(.sapMBtnActive) {
+		border-color: var(--sapShell_Hover_Background);
+	}
+
+	.sapMToggleBtnPressed:not(.sapMBtnDisabled),
+	.sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed:not(.sapMBtnDisabled) {
+		background-color: var(--sapShell_Active_Background);
+		border-color: var(--sapShell_Active_Background);
+	}
+
+	/* Avatar */
+	.sapFShellBarProfile:not(:focus):hover {
+		box-shadow: 0 0 0.125rem 0 fade(@sapContent_ShadowColor, 72);
+		background-color: none;
+	}
+
+	.sapFShellBarProfile:hover::before {
+		content: none;
+	}
+
+	/* Mega Menu */
+	.sapFSHMegaMenu {
+		color: var(--sapShell_TextColor);
+		overflow: visible;
+		font-size: var(--sapFontHeader5Size);
+		font-weight: bold;
+
+		.sapMBtn:hover > .sapMBtnHoverable.sapMToggleBtnPressed:not(.sapMBtnActive) {
+			background: var(--sapShell_Hover_Background);
+			box-shadow: var(--sapContent_Interaction_Shadow);
+		}
+
+		.sapMBtn:hover > .sapMBtnHoverable.sapMToggleBtnPressed.sapMBtnActive {
+			background: var(--sapShell_Active_Background);
+			color: var(--sapShell_Active_TextColor);
+			box-shadow: var(--sapContent_Selected_Shadow);
+		}
+
+		.sapMBtnInner,
+		.sapMBtnInner::after {
+			font-weight: normal;
+			font-size: 1rem;
+		}
+
+		.sapMBtnInner::after {
+			content: '\e1ef';
+			font-family: var(--sapContent_IconFontFamily);
+		}
+	}
+
+	/* Home Icon */
+	.sapFShellBarHomeIcon {
+		max-height: 2rem;
+		padding: 0.25rem;
+		overflow-clip-margin: border-box;
+
+		&:hover {
+			background: var(--sapShell_Hover_Background);
+			box-shadow: var(--sapContent_Interaction_Shadow);
+			border-radius: 0.5rem;
+		}
+
+		&.sapMImgFocusable:focus {
+			border-radius: 0.5rem;
+		}
+	}
+
+	/* Primary Title */
+	.sapFShellBarPrimaryTitle {
+		color: var(--sapShell_SubBrand_TextColor);
+	}
+
+	/* Second Title */
+	.sapFShellBarSecondTitle {
+		font-size: var(--sapFontSmallSize);
+		color: var(--sapShell_TextColor);
+		text-overflow: ellipsis;
+	}
+
+	/* Search */
+	.sapFShellBarSearch {
+		max-width: 35rem; /* max width of searchField + button width */
+
+		.sapMSF {
+			max-width: 35rem;
+		}
+
+		/* Reflection: styles overwritten */
+		.sapMBtn {
+			padding: 0;
+			margin-left: 0.25rem;
+			position: absolute;
+			right: 0;
+		}
+
+		.sapMSFVal + .sapMBtn .sapMBtnInner {
+			background-color: var(--sapShell_Active_Background);
+
+			.sapMBtnIcon {
+				color: var(--sapShell_InteractiveTextColor);
+			}
+		}
+	}
+
+	.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapMBtn:not(.sapFShellBarSearchCancelButton) {
+		right: 3.875rem;
+	}
+
+	.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapFShellBarSearchWrap .sapMSFF .sapMSFB {
+		margin-right: 5.5rem;
+	}
+
+	.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapFShellBarSearchWrap {
+		max-width: 35rem;
+		padding: 0;
+
+		.sapMSF {
+			max-width: 100%;
+		}
+	}
+
+	.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapFShellBarSearchWrap .sapMSF.sapMSFVal form.sapMSFNS:not(.sapMSFReload) {
+		padding-right: 0.5rem;
+	}
+
+	.sapFShellBarSearchWrap {
+		position: relative;
+
+		.sapMSFF {
+			background: @sapUiUx3ShellHeaderColor;
+			border: 0.0625rem solid var(--sapShell_InteractiveBorderColor);
+			border-radius: 0;
+			color: var(--sapShell_InteractiveTextColor);
+			height: 2.25rem;
+			font-weight: normal;
+
+			/* Clear icon */
+			.sapMSFB {
+				border: 1px solid transparent; /* prevent jumping when hovering */
+				width: 2.125rem;
+				height: 2.125rem;
+				line-height: 2.125rem;
+				font-size: 1rem;
+				text-align: center;
+				padding: 0;
+				right: 0;
+				top: 0;
+				margin-right: 2.125rem;
+			}
+
+			.sapMSFB:hover {
+				box-shadow: none;
+				border: 0.0625rem solid var(--sapShell_InteractiveBorderColor);
+				border-radius: 0;
+				height: 2.125rem;
+				color: var(--sapShell_InteractiveTextColor);
+			}
+
+			.sapMSFB:active,
+			.sapMSFB.sapMSFBA {
+				background: var(--sapShell_Active_Background);
+				border: 0.0625rem solid var(--sapShell_InteractiveBorderColor);
+				box-shadow: none;
+				border-radius: 0;
+				color: var(--sapShell_Active_TextColor);
+			}
+		}
+
+		.sapMSF {
+			max-width: 35rem;
+			margin-right: 0;
+		}
+
+		.sapMSF:not(.sapMSFVal) form.sapMSFNS:not(.sapMSFReload) {
+			padding-right: 0.5rem;
+		}
+
+		.sapMSF:not(.sapMSFDisabled):hover .sapMSFF {
+			background-color: var(--sapShell_Hover_Background);
+			box-shadow: var(--sapContent_Interaction_Shadow);
+		}
+
+		/* Reflection: styles overwritten */
+		.sapMBtn .sapMBtnInner {
+			border: 0.0625rem solid var(--sapShell_InteractiveBorderColor);
+			border-radius: 0;
+			color: var(--sapShell_InteractiveTextColor);
+		}
+
+		.sapMSFI {
+			color: var(--sapField_PlaceholderTextColor);
+			font-weight: italic;
+		}
+	}
+}
+
+/* Overriding styles comming from other controls */
+html.sap-desktop .sapFShellBarSearchWrap .sapMBtn:focus > .sapMFocusable:not(.sapMBadgeIndicator)::before {
+	border-radius: 1.125rem;
+}
+
+/* Resets of sizes for "Compact" mode - controls should remain in cozy mode */
+.alwaysCozyOverrideByParent(@controlClass) {
+
+	.sapUiSizeCompact {
+
+		.@{controlClass} {
+			height: 3.25rem;
+
+			&.sapMPageHeader .sapMIBar,
+			.sapMIBar {
+				height: 3.25rem;
+			}
+
+			/* Reflection: styles overwritten
+			sap.m.MegaMenu */
+			.sapFSHMegaMenu {
+				height: 2.75rem;
+			}
+
+			/* sap.m.Button */
+			.sapMBtn {
+				height: 2.75rem;
+				padding: 0.25rem 0;
+			}
+
+			.sapMBtnInner {
+				height: 2.25rem;
+				min-width: 2.25rem;
+			}
+
+			.sapMBtnInner.sapMBtnText {
+				padding-left: 0.625rem;
+				padding-right: 0.625rem;
+			}
+
+			.sapMBtnContent {
+				line-height: 2.125rem;
+			}
+
+			.sapMBtnIcon {
+				width: 2.125rem;
+				font-size: 1rem;
+				line-height: 2.125rem;
+				max-height: 2.375rem;
+				margin: 0;
+				padding: 0;
+			}
+
+			.sapMBtnIconLeft + .sapMBtnIconLeft {
+				left: 0;
+			}
+
+			.sapMBtnText {
+
+				.sapMBtnIconLeft + .sapMBtnIconLeft {
+					left: 2.875rem;
+				}
+			}
+
+			.sapMBtnInner > img {
+				width: 2.5rem;
+				margin-top: 0.2rem;
+				margin-left: 0.2rem;
+			}
+
+		  	html.sap-desktop & .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed, .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed:not(.sapMBtnDisabled) {
+				background-color: var(--sapShell_Active_Background);
+			}
+
+			/* Reflection: styles overwritten
+			sap.m.MenuButton */
+			.sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner::after {
+				height: 2.375rem;
+				line-height: 2.2rem;
+				padding-right: 0.75rem;
+				padding-left: 0.5625rem;
+			}
+
+			.sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner:not(.sapMBtnText) {
+				padding-right: 1.625rem;
+			}
+
+			.sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner {
+				padding-right: 2rem;
+			}
+
+			.sapMMenuBtn .sapMBtnIconFirst .sapMBtnIcon {
+				padding-right: 0.75rem;
+			}
+
+			/* sap.m.SearchField */
+			.sapFShellBarSearch {
+				max-width: 35rem;
+
+				.sapMSF {
+					max-width: 35rem;
+					margin-right: 0;
+				}
+			}
+
+			.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapMBtn:not(.sapFShellBarSearchCancelButton) {
+				right: 4rem;
+			}
+
+			.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapFShellBarSearchWrap .sapMSFF .sapMSFB {
+				margin-right: 5.625rem;
+			}
+
+			.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapFShellBarSearchWrap {
+				max-width: 35rem;
+				padding: 0;
+			}
+
+			.sapFShellBarSearch.sapFShellBarSearchFullWidth .sapFShellBarSearchWrap .sapMSF.sapMSFVal form.sapMSFNS:not(.sapMSFReload) {
+				padding-right: 0.5rem;
+			}
+
+			.sapFShellBarSearchWrap {
+
+				.sapMBtn .sapMBtnInner {
+					border-radius: 0;
+				}
+			}
+
+			.sapMSF {
+				min-width: 7rem;
+				height: 2.75rem;
+				padding: 0.25rem 0;
+
+				.sapMSFI {
+					height: 2.125rem
+				}
+
+				.sapMSFF {
+					height: 2.25rem;
+					line-height: 2.125rem;
+					padding-left: 0.625rem;
+				}
+
+				.sapMSFR:not(.sapMSFNS) {
+					right: 2.375rem;
+				}
+
+				.sapMSFB {
+					border: 1px solid transparent; /* prevent jumping when hovering */
+					width: 2.125rem;
+					height: 2.125rem;
+					line-height: 2.125rem;
+					font-size: 1rem;
+					padding: 0;
+					right: 0;
+					top: 0;
+				}
+
+				.sapMSFB:hover {
+					height: 2.125rem;
+				}
+			}
+
+			/* Reflection: styles overwritten
+			sap.m.Select */
+			.sapMSlt {
+				height: 2.5rem;
+
+				.sapMSltArrow {
+					line-height: 2.5rem;
+					width: 2.5rem;
+				}
+
+				.sapMSltLabel {
+					line-height: 2.375rem;
+					padding: 0 3rem 0 0.625rem;
+				}
+
+				.sapMSelectListItem {
+					line-height: 2.5rem;
+				}
+
+				.sapMSelectListItemBase {
+					height: 2.5rem;
+				}
+			}
+		}
+	}
+}

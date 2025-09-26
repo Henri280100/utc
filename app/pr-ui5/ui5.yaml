@@ -1,9 +1,9 @@
 specVersion: "4.0"
 metadata:
-  name: sap.ui.prui5
+  name: prui5
 type: application
 framework:
-  name: OpenUI5
+  name: SAPUI5
   version: "1.139.0"
   libraries:
     - name: sap.ui.core
