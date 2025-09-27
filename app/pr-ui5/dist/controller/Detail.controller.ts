@@ -13,7 +13,7 @@ export default class DetailController extends Controller {
   private oRouter!: Router;
   private _ctxPathEncoded!: string;
   private oView!: View;
-  private get layoutModel(): JSONModel {
+  private  layoutModel(): JSONModel {
     const ownerComponent = this.getOwnerComponent();
     if (!ownerComponent) {
       throw new Error("No owner component");
@@ -132,7 +132,7 @@ export default class DetailController extends Controller {
 
   public handleFullScreen(): void {
     const abi =
-      this.layoutModel?.getProperty(
+      this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/fullScreen"
       ) || {};
     const nextLayout =
@@ -146,7 +146,7 @@ export default class DetailController extends Controller {
 
   public handleExitFullScreen(): void {
     const abi =
-      this.layoutModel?.getProperty(
+      this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/exitFullScreen"
       ) || {};
     const nextLayout =
@@ -161,7 +161,7 @@ export default class DetailController extends Controller {
 
   public handleClose(): void {
     const abi =
-      this.layoutModel?.getProperty(
+      this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/closeColumn"
       ) || {};
     const nextLayout =

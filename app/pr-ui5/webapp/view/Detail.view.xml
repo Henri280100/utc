@@ -73,7 +73,7 @@
             press=".handleFullScreen"
             id="idEnterFullScreenOverflowToolbarButton"
             tooltip="Enter Full Screen Mode"
-            visible="{= ${/actionButtonsInfo/midColumn/fullScreen} ? true : false }"
+            visible="{= ${/actionButtonsInfo/midColumn/fullScreen} !== null }"
           />
           <m:OverflowToolbarButton
             type="Transparent"
@@ -81,7 +81,7 @@
             press=".handleExitFullScreen"
             id="idExitFullScreenOverflowToolbarButton"
             tooltip="Exit Full Screen Mode"
-            visible="{= ${/actionButtonsInfo/midColumn/exitFullScreen} ? true : false }"
+            visible="{= ${/actionButtonsInfo/midColumn/exitFullScreen} !== null }"
           />
           <m:OverflowToolbarButton
             type="Transparent"

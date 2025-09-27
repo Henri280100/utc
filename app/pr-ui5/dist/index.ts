@@ -1,11 +1,10 @@
+// index.ts
 import ComponentContainer from "sap/ui/core/ComponentContainer";
 
+
 new ComponentContainer({
-  id: "container",
-  name: "sap.ui.prui5",
-  settings: {
-    id: "prui5",
-    
-  },
-  async: true,
+  manifest: true,
+  name: "sap.ui.prui5",          // UI5 will construct your app component
+  height: "100%",
+  async: true
 }).placeAt("content");

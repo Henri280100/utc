@@ -1,15 +1,17 @@
 {
   "compilerOptions": {
-    "target": "es2022",
-    "module": "es2022",
+    "target": "es6",
+    "module": "esnext",
     "moduleResolution": "node",
     "skipLibCheck": true,
     "allowJs": true,
     "strict": true,
+    "types": ["@sapui5/types"],
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
     "rootDir": "webapp",
     "baseUrl": "./",
+    "noEmit": true,
     "paths": {
       "sap/*": ["webapp/sap/*"]
     }

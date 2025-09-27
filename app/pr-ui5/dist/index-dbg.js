@@ -2,11 +2,10 @@ sap.ui.define(["sap/ui/core/ComponentContainer"], function (ComponentContainer) 
   "use strict";
 
   new ComponentContainer({
-    id: "container",
+    manifest: true,
     name: "sap.ui.prui5",
-    settings: {
-      id: "prui5"
-    },
+    // UI5 will construct your app component
+    height: "100%",
     async: true
   }).placeAt("content");
 });

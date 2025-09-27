@@ -8,6 +8,9 @@ import { Route$PatternMatchedEvent } from "sap/ui/core/routing/Route";
 
 type LayoutType = fLibrary.LayoutType;
 
+/** 
+ * @namespace sap.ui.prui5
+ */
 export default class Component extends UIComponent {
   public static metadata = {
     interfaces: ["sap.ui.core.IAsyncContentCreation"],

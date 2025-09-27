@@ -10,7 +10,7 @@ sap.ui.define(["sap/ui/core/mvc/Controller", "../models/formatter", "sap/m/Messa
       Controller.prototype.constructor.apply(this, arguments);
       this.formatter = formatter;
     },
-    get layoutModel() {
+    layoutModel: function _layoutModel() {
       const ownerComponent = this.getOwnerComponent();
       if (!ownerComponent) {
         throw new Error("No owner component");
@@ -85,7 +85,7 @@ sap.ui.define(["sap/ui/core/mvc/Controller", "../models/formatter", "sap/m/Messa
      * FCL layout handlers
      * ========================= */
     handleFullScreen: function _handleFullScreen() {
-      const abi = this.layoutModel?.getProperty("/actionButtonsInfo/midColumn/fullScreen") || {};
+      const abi = this.layoutModel()?.getProperty("/actionButtonsInfo/midColumn/fullScreen") || {};
       const nextLayout = abi?.midColumn?.fullScreen || fLibrary.LayoutType.MidColumnFullScreen;
       this.oRouter.navTo("detail", {
         ctxPath: this._ctxPathEncoded,
@@ -94,7 +94,7 @@ sap.ui.define(["sap/ui/core/mvc/Controller", "../models/formatter", "sap/m/Messa
       });
     },
     handleExitFullScreen: function _handleExitFullScreen() {
-      const abi = this.layoutModel?.getProperty("/actionButtonsInfo/midColumn/exitFullScreen") || {};
+      const abi = this.layoutModel()?.getProperty("/actionButtonsInfo/midColumn/exitFullScreen") || {};
       const nextLayout = abi?.midColumn?.exitFullScreen || fLibrary.LayoutType.TwoColumnsMidExpanded;
       this.oRouter.navTo("detail", {
         ctxPath: this._ctxPathEncoded,
@@ -102,7 +102,7 @@ sap.ui.define(["sap/ui/core/mvc/Controller", "../models/formatter", "sap/m/Messa
       });
     },
     handleClose: function _handleClose() {
-      const abi = this.layoutModel?.getProperty("/actionButtonsInfo/midColumn/closeColumn") || {};
+      const abi = this.layoutModel()?.getProperty("/actionButtonsInfo/midColumn/closeColumn") || {};
       const nextLayout = abi?.midColumn?.closeColumn || fLibrary.LayoutType.OneColumn;
       this.oRouter.navTo("List", {
         layout: nextLayout

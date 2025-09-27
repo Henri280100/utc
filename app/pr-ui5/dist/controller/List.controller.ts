@@ -15,7 +15,7 @@ export default class ListController extends Controller {
   private oView: any;
   private _bDescendingSort: boolean = false;
   private oRequisitionTable: any;
-  private oRouter!: Router;
+  private oRouter: Router | undefined;
 
   public onInit(): void {
     // View & Router
