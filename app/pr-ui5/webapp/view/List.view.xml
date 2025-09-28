@@ -2,9 +2,13 @@
   controllerName="sap.ui.prui5.controller.List"
   xmlns="sap.m"
   xmlns:f="sap.f"
-  xmlns:mvc="sap.ui.core.mvc">
-
-  <f:DynamicPage id="idDynamicPage" toggleHeaderOnTitleClick="false">
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns:core="sap.ui.core"
+>
+  <f:DynamicPage
+    id="idDynamicPage"
+    toggleHeaderOnTitleClick="false"
+  >
     <f:title>
       <f:DynamicPageTitle>
         <f:heading>
@@ -12,18 +16,147 @@
         </f:heading>
       </f:DynamicPageTitle>
     </f:title>
-
+    <f:header>
+      <f:DynamicPageHeader>
+        <OverflowToolbar height="6rem">
+          <!-- Basic Search spans full row on phones -->
+          <VBox
+            width="16rem"
+            class="sapUiSmallMarginEnd"
+          >
+            <Label
+              text="Search"
+              labelFor="idBasicSearch"
+            />
+            <SearchField search=".onSearchFieldBasicSearch" />
+          </VBox>
+          <VBox
+            width="16rem"
+            class="sapUiSmallMarginEnd"
+          >
+            <Label
+              text="Sale Order Number"
+              labelFor="idSalesOrderIDMultiInput"
+            />
+            <MultiInput
+              id="idSalesOrderIDMultiInput"
+              placeholder="Search by Sales Order No"
+              showValueHelp="true"
+              valueHelpRequest=".onMultiInputValueHelpRequest"
+              tokenUpdate=".onMultiInputTokenUpdate"
+            >
+              <core:Item
+                key="{salesOrder>SalesOrderID}"
+                text="{salesOrder>SalesOrderID}"
+              />
+            </MultiInput>
+          </VBox>
+          <VBox
+            width="16rem"
+            class="sapUiSmallMarginEnd"
+          >
+            <Label
+              text="Customer"
+              labelFor="idCustomerNameMultiInput"
+            />
+            <MultiInput
+              id="idCustomerNameMultiInput"
+              placeholder="Search by Customer Name"
+              showValueHelp="true"
+              valueHelpRequest=".onMultiInputValueHelpRequest"
+              tokenUpdate=".onMultiInputTokenUpdate"
+            >
+              <core:Item
+                key="{salesOrder>CustomerName}"
+                text="{salesOrder>CustomerName}"
+              />
+            </MultiInput>
+          </VBox>
+          <VBox
+            width="16rem"
+            class="sapUiSmallMarginEnd"
+          >
+            <Label
+              text="Product"
+              labelFor="idProductIDMultiInput"
+            />
+            <MultiInput
+              id="idProductIDMultiInput"
+              placeholder="Search by Product ID"
+              showValueHelp="true"
+              valueHelpRequest=".onMultiInputValueHelpRequest"
+              tokenUpdate=".onMultiInputTokenUpdate"
+            >
+              <core:Item
+                key="{salesOrder>ToLineItems/ProductID}"
+                text="{salesOrder>ToLineItems/ProductID}"
+              />
+            </MultiInput>
+          </VBox>
+          <HBox
+            width="16rem"
+            class="sapUiSmallMarginEnd"
+          >
+            <Button
+              text="Go"
+              Type="Transparent"
+              id="idGoButton"
+              press=".onGoButtonPress"
+            />
+            <OverflowToolbarButton
+              icon="sap-icon://filter"
+              text="Filter"
+              type="Transparent"
+              press=".onFilterOverflowToolbarButtonPress"
+            />
+          </HBox>
+        </OverflowToolbar>
+      </f:DynamicPageHeader>
+    </f:header>
     <f:content>
       <VBox fitContainer="true">
         <OverflowToolbar class="sapFDynamicPageAlignContent">
           <ToolbarSpacer />
-          <SearchField search=".onSearchFieldBasicSearch" width="17.5rem" />
-          <OverflowToolbarButton icon="sap-icon://add" text="Add" type="Transparent"
-            press=".onAddOverflowToolbarButtonPress" />
-          <OverflowToolbarButton icon="sap-icon://sort" text="Sort" type="Transparent"
-            press=".onSortOverflowToolbarButtonPress" />
+          <OverflowToolbarButton
+            icon="sap-icon://add"
+            text="Create"
+            id="idAddOverflowToolbarButton"
+            type="Transparent"
+            press=".onAddOverflowToolbarButtonPress"
+          />
+          <OverflowToolbarButton
+            icon="sap-icon://sort"
+            text="Sort"
+            type="Transparent"
+            press=".onSortOverflowToolbarButtonPress"
+          />
+          <OverflowToolbarButton
+            icon="sap-icon://action-settings"
+            type="Transparent"
+            press=".onSettingsOverflowToolbarButtonPress"
+          />
+          <MenuButton
+            icon="sap-icon://excel-attachment"
+            buttonMode="Split"
+            useDefaultActionOnly="true"
+            id="idExportMenuButton"
+            type="Transparent"
+          >
+            <menu>
+              <Menu itemSelected=".onMenuItemSelected">
+                <MenuItem
+                  text="Export as"
+                  icon="sap-icon://attachment-zip-file"
+                />
+                <MenuItem
+                  text="Export"
+                  icon="sap-icon://excel-attachment"
+                />
+              </Menu>
+            </menu>
+          </MenuButton>
+          <ToolbarSpacer width="1.5rem" />
         </OverflowToolbar>
-
         <Table
           growing="true"
           mode="MultiSelect"
@@ -39,8 +172,8 @@
             }
           }"
           class="sapFDynamicPageAlignContent"
-          width="auto">
-
+          width="auto"
+        >
           <columns>
             <Column width="12em">
               <Text text="Requisition ID" />
@@ -58,16 +191,21 @@
               <Text text="Status" />
             </Column>
           </columns>
-
           <items>
-            <ColumnListItem type="Navigation" press=".onColumnListItemPress">
+            <ColumnListItem
+              type="Navigation"
+              press=".onColumnListItemPress"
+            >
               <cells>
-                <ObjectIdentifier title="{PurchaseRequisition>purchaseRequisition}"
-                  text="{PurchaseRequisition>purchaseReqnItem}" />
-                <Text
-                  text="{PurchaseRequisition>material/materialDescriptions/0/materialDescriptions}" />
-                <ObjectNumber number="{PurchaseRequisition>quantity}"
-                  unit="{PurchaseRequisition>baseUnit}" />
+                <ObjectIdentifier
+                  title="{PurchaseRequisition>purchaseRequisition}"
+                  text="{PurchaseRequisition>purchaseReqnItem}"
+                />
+                <Text text="{PurchaseRequisition>material/materialDescriptions/0/materialDescriptions}" />
+                <ObjectNumber
+                  number="{PurchaseRequisition>quantity}"
+                  unit="{PurchaseRequisition>baseUnit}"
+                />
                 <Text text="{PurchaseRequisition>deliveryDate}" />
                 <Text text="{PurchaseRequisition>releaseStatus}" />
               </cells>
@@ -76,12 +214,17 @@
         </Table>
       </VBox>
     </f:content>
-
     <f:footer>
       <OverflowToolbar>
         <ToolbarSpacer />
-        <Button type="Accept" text="Accept" />
-        <Button type="Reject" text="Reject" />
+        <Button
+          type="Accept"
+          text="Accept"
+        />
+        <Button
+          type="Reject"
+          text="Reject"
+        />
       </OverflowToolbar>
     </f:footer>
   </f:DynamicPage>

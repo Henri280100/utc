@@ -48,18 +48,22 @@ export default class ListController extends Controller {
     }
   }
 
-  onAddOverflowToolbarButtonPress(): void {
+  public onAddOverflowToolbarButtonPress(): void {
     MessageBox.information("This functionality is not ready yet.", {
       title: "Aw, Snap!",
     });
   }
 
-  onSortOverflowToolbarButtonPress(): void {
+  public onSortOverflowToolbarButtonPress(): void {
     this._bDescendingSort = !this._bDescendingSort;
     var oBinding = this.oRequisitionTable.getBinding("items"),
       oSorter = new Sorter("purchaseRequisition", this._bDescendingSort);
 
     oBinding.sort(oSorter);
+  }
+
+  public onMenuItemSelected(oEvent: Event): void {
+    
   }
 
   onColumnListItemPress(oEvent: Event) {
