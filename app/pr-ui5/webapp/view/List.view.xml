@@ -18,7 +18,7 @@
     </f:title>
     <f:header>
       <f:DynamicPageHeader>
-        <OverflowToolbar height="6rem">
+        <OverflowToolbar height="6rem" class="sapUiSmallMarginTopBottom">
           <!-- Basic Search spans full row on phones -->
           <VBox
             width="16rem"
@@ -95,17 +95,20 @@
           </VBox>
           <HBox
             width="16rem"
-            class="sapUiSmallMarginEnd"
+            fitContainer="true"
+            alignItems="Center"
+            alignContent="Start"
+            class="sapUiSmallMarginTopBottom sapCenterGroupButtons"
           >
             <Button
+              type="Emphasized"
               text="Go"
-              Type="Transparent"
               id="idGoButton"
               press=".onGoButtonPress"
+
             />
-            <OverflowToolbarButton
-              icon="sap-icon://filter"
-              text="Filter"
+            <Button
+              text="Adapt Filter"
               type="Transparent"
               press=".onFilterOverflowToolbarButtonPress"
             />
@@ -121,7 +124,7 @@
             icon="sap-icon://add"
             text="Create"
             id="idAddOverflowToolbarButton"
-            type="Transparent"
+            type="Emphasized"
             press=".onAddOverflowToolbarButtonPress"
           />
           <OverflowToolbarButton
@@ -130,12 +133,15 @@
             type="Transparent"
             press=".onSortOverflowToolbarButtonPress"
           />
+          <ToolbarSeparator />
           <OverflowToolbarButton
+            text="Settings"
             icon="sap-icon://action-settings"
             type="Transparent"
             press=".onSettingsOverflowToolbarButtonPress"
           />
           <MenuButton
+            tooltip="Export"
             icon="sap-icon://excel-attachment"
             buttonMode="Split"
             useDefaultActionOnly="true"
@@ -164,7 +170,7 @@
           inset="false"
           items="{
             parameters: {
-              $select: 'purchaseRequisition,purchaseReqnItem,quantity,baseUnit,deliveryDate,releaseStatus'
+            $expand: 'material($select=material;$expand=materialDescriptions($select=materialDescriptions,language)),plant($select=plant)'
             },
             path: 'PurchaseRequisition>/PurchaseRequisition',
             sorter: {
@@ -182,13 +188,28 @@
               <Text text="Material" />
             </Column>
             <Column>
+              <Text text="Material Description" />
+            </Column>
+            <Column>
               <Text text="Quantity" />
             </Column>
             <Column>
               <Text text="Delivery Date" />
             </Column>
             <Column>
-              <Text text="Status" />
+              <Text text="Release Status" />
+            </Column>
+            <Column>
+              <Text text="Requisition Date" />
+            </Column>
+            <Column>
+              <Text text="Requisitioner" />
+            </Column>
+            <Column>
+              <Text text="Plant" />
+            </Column>
+            <Column>
+              <Text text="Purchase Requisition Type" />
             </Column>
           </columns>
           <items>
@@ -199,15 +220,45 @@
               <cells>
                 <ObjectIdentifier
                   title="{PurchaseRequisition>purchaseRequisition}"
-                  text="{PurchaseRequisition>purchaseReqnItem}"
+                  text="Item: {PurchaseRequisition>purchaseReqnItem}"
                 />
-                <Text text="{PurchaseRequisition>material/materialDescriptions/0/materialDescriptions}" />
+                <Text text="{PurchaseRequisition>material/material}" />
+                <Text text="{
+                        path: 'PurchaseRequisition>material/materialDescriptions/0/materialDescriptions',
+                        targetType: 'any',
+                        formatter: '.formatter.pickDescriptionByUILang'
+                      }" />
                 <ObjectNumber
                   number="{PurchaseRequisition>quantity}"
                   unit="{PurchaseRequisition>baseUnit}"
                 />
-                <Text text="{PurchaseRequisition>deliveryDate}" />
-                <Text text="{PurchaseRequisition>releaseStatus}" />
+                <ObjectAttribute
+                
+                text="{
+                  path: 'PurchaseRequisition>deliveryDate',
+                  type: 'sap.ui.model.odata.type.Date',
+                  formatOptions: {
+                    style: 'medium'
+                  }
+                }"
+              />
+                <ObjectAttribute
+                
+                text="{PurchaseRequisition>releaseStatus}"
+              />
+              <ObjectAttribute
+                
+                text="{
+                  path: 'PurchaseRequisition>requisitionDate',
+                  type: 'sap.ui.model.odata.type.Date',
+                  formatOptions: {
+                    style: 'medium'
+                  }
+                }"
+              />
+              <Text text="{PurchaseRequisition>requisitioner}"/>
+              <Text text="{PurchaseRequisition>plant/plant}"/>
+              <Text text="{PurchaseRequisition>PurchaseRequisitionType}"/>
               </cells>
             </ColumnListItem>
           </items>

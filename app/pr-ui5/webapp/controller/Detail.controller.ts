@@ -130,7 +130,7 @@ export default class DetailController extends Controller {
    * FCL layout handlers
    * ========================= */
 
-  public handleFullScreen(): void {
+  handleFullScreen(): void {
     const abi =
       this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/fullScreen"
@@ -144,7 +144,7 @@ export default class DetailController extends Controller {
     });
   }
 
-  public handleExitFullScreen(): void {
+  handleExitFullScreen(): void {
     const abi =
       this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/exitFullScreen"
@@ -159,7 +159,7 @@ export default class DetailController extends Controller {
     });
   }
 
-  public handleClose(): void {
+  handleClose(): void {
     const abi =
       this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/closeColumn"

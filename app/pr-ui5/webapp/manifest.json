@@ -23,6 +23,13 @@
       "async": true,
       "id": "app"
     },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
     "models": {
       "PurchaseRequisition": {
         "type": "sap.ui.model.odata.v4.ODataModel",

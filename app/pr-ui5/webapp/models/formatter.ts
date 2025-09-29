@@ -19,7 +19,7 @@ interface PIRow {
 }
 
 /** Material description entity */
-interface MaterialDescription {
+interface MaterialDescriptions {
   language?: string;              // e.g. "en" or "en-US"
   materialDescriptions?: string;  // the actual text
   [k: string]: unknown;
@@ -71,7 +71,7 @@ const formatter = {
   /** MaterialDescriptions[] → best description for UI language */
   pickDescriptionByUILang(aDescs: unknown): string {
     const arr = Array.isArray(aDescs)
-      ? (aDescs as MaterialDescription[])
+      ? (aDescs as MaterialDescriptions[])
       : [];
     if (!arr.length) return "";
 

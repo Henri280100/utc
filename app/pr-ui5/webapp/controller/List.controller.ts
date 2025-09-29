@@ -10,13 +10,14 @@ import View from "sap/ui/core/mvc/View";
 import Table from "sap/m/Table";
 import ListBinding from "sap/ui/model/ListBinding";
 import UIComponent from "sap/ui/core/UIComponent";
+import formatter from "../models/formatter";
 
 export default class ListController extends Controller {
   private oView: any;
   private _bDescendingSort: boolean = false;
   private oRequisitionTable: any;
   private oRouter: Router | undefined;
-
+  public formatter = formatter;
   public onInit(): void {
     // View & Router
     const view = this.getView();
@@ -33,7 +34,7 @@ export default class ListController extends Controller {
     }
   }
 
-  public onSearchFieldBasicSearch(oEvent: Event) {
+  onSearchFieldBasicSearch(oEvent: Event) {
     if (!this.oRequisitionTable) return;
 
     const sQuery = (oEvent.getParameter as any)("query") as string | undefined;
@@ -48,13 +49,13 @@ export default class ListController extends Controller {
     }
   }
 
-  public onAddOverflowToolbarButtonPress(): void {
+  onAddOverflowToolbarButtonPress(): void {
     MessageBox.information("This functionality is not ready yet.", {
       title: "Aw, Snap!",
     });
   }
 
-  public onSortOverflowToolbarButtonPress(): void {
+  onSortOverflowToolbarButtonPress(): void {
     this._bDescendingSort = !this._bDescendingSort;
     var oBinding = this.oRequisitionTable.getBinding("items"),
       oSorter = new Sorter("purchaseRequisition", this._bDescendingSort);
@@ -65,6 +66,15 @@ export default class ListController extends Controller {
   public onMenuItemSelected(oEvent: Event): void {
     
   }
+
+  public onMultiInputValueHelpRequest(): void {
+
+  }
+
+  public onMultipleInputTokenUpdate(): void {}
+
+  public onGoButtonPress(): void {}
+
 
   onColumnListItemPress(oEvent: Event) {
     if (!this.oRouter) return;
