@@ -1,24 +1,26 @@
-import Controller from "sap/ui/core/mvc/Controller";
-import formatter from "../models/formatter";
-import MessageToast from "sap/m/MessageToast";
+import { UIState } from "sap/f/FlexibleColumnLayoutSemanticHelper";
 import * as fLibrary from "sap/f/library";
-import Router from "sap/ui/core/routing/Router";
-import JSONModel from "sap/ui/model/json/JSONModel";
-import Event from "sap/ui/base/Event";
+import MessageToast from "sap/m/MessageToast";
 import UIComponent from "sap/ui/core/UIComponent";
+import Controller from "sap/ui/core/mvc/Controller";
 import View from "sap/ui/core/mvc/View";
 import { Route$BeforeMatchedEvent } from "sap/ui/core/routing/Route";
+import Router from "sap/ui/core/routing/Router";
+import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
+import { LayoutVM } from "webapp/models/viewmodels";
+import formatter from "../models/formatter";
 
 export default class DetailController extends Controller {
   private oRouter!: Router;
   private _ctxPathEncoded!: string;
   private oView!: View;
-  private  layoutModel(): JSONModel {
+
+  private layoutModel(): TypedJSONModel<LayoutVM> {
     const ownerComponent = this.getOwnerComponent();
     if (!ownerComponent) {
       throw new Error("No owner component");
     }
-    return ownerComponent.getModel("layout") as JSONModel;
+    return ownerComponent.getModel("layout") as TypedJSONModel<LayoutVM>;
   }
 
   public formatter = formatter;
@@ -131,12 +133,10 @@ export default class DetailController extends Controller {
    * ========================= */
 
   handleFullScreen(): void {
-    const abi =
-      this.layoutModel()?.getProperty(
-        "/actionButtonsInfo/midColumn/fullScreen"
-      ) || {};
     const nextLayout =
-      abi?.midColumn?.fullScreen || fLibrary.LayoutType.MidColumnFullScreen;
+      (this.layoutModel().getProperty(
+        "/actionButtonsInfo/midColumn/fullScreen"
+      ) as UIState["layout"]) ?? fLibrary.LayoutType.MidColumnFullScreen;
 
     this.oRouter.navTo("detail", {
       ctxPath: this._ctxPathEncoded, // keep your ctxPath param
@@ -145,13 +145,10 @@ export default class DetailController extends Controller {
   }
 
   handleExitFullScreen(): void {
-    const abi =
-      this.layoutModel()?.getProperty(
-        "/actionButtonsInfo/midColumn/exitFullScreen"
-      ) || {};
     const nextLayout =
-      abi?.midColumn?.exitFullScreen ||
-      fLibrary.LayoutType.TwoColumnsMidExpanded;
+      (this.layoutModel().getProperty(
+        "/actionButtonsInfo/midColumn/exitFullScreen"
+      ) as UIState["layout"]) ?? fLibrary.LayoutType.TwoColumnsMidExpanded;
 
     this.oRouter.navTo("detail", {
       ctxPath: this._ctxPathEncoded,
@@ -160,12 +157,10 @@ export default class DetailController extends Controller {
   }
 
   handleClose(): void {
-    const abi =
-      this.layoutModel()?.getProperty(
-        "/actionButtonsInfo/midColumn/closeColumn"
-      ) || {};
     const nextLayout =
-      abi?.midColumn?.closeColumn || fLibrary.LayoutType.OneColumn;
+      (this.layoutModel().getProperty(
+        "/actionButtonsInfo/midColumn/closeColumn"
+      ) as UIState["layout"]) ?? fLibrary.LayoutType.OneColumn;
 
     this.oRouter.navTo("List", { layout: nextLayout });
   }

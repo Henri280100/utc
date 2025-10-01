@@ -1,5 +1,4 @@
 // webapp/controller/App.controller.ts
-import Controller from "sap/ui/core/mvc/Controller";
 import FlexibleColumnLayout, {
   FlexibleColumnLayout$StateChangeEvent,
 } from "sap/f/FlexibleColumnLayout";
@@ -8,10 +7,12 @@ import FlexibleColumnLayoutSemanticHelper, {
 } from "sap/f/FlexibleColumnLayoutSemanticHelper";
 import * as fLibrary from "sap/f/library";
 import UI5Event from "sap/ui/base/Event";
-import Router from "sap/ui/core/routing/Router";
-import JSONModel from "sap/ui/model/json/JSONModel";
 import UIComponent from "sap/ui/core/UIComponent";
+import Controller from "sap/ui/core/mvc/Controller";
 import { Route$PatternMatchedEvent } from "sap/ui/core/routing/Route";
+import Router from "sap/ui/core/routing/Router";
+import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
+import { LayoutVM } from "webapp/models/viewmodels";
 
 type LayoutType = fLibrary.LayoutType;
 
@@ -21,7 +22,7 @@ export default class AppController extends Controller {
   private _fclHelper!: FlexibleColumnLayoutSemanticHelper;
 
   /** App-wide layout model (default unnamed JSONModel on Component) */
-  private oLayoutModel!: JSONModel;
+  private oLayoutModel!: TypedJSONModel<LayoutVM>;
 
   /** Router + current route state */
   private oRouter!: Router;
@@ -38,7 +39,7 @@ export default class AppController extends Controller {
     if (!comp) throw new Error("No owner component");
 
     this.oRouter = comp.getRouter();
-    this.oLayoutModel = comp.getModel() as JSONModel; // default model provided in Component
+    this.oLayoutModel = comp.getModel() as TypedJSONModel<LayoutVM>; // default model provided in Component
 
     // FCL control + helper
     this._oFCL = this.byId("idFlexibleColumnLayout") as FlexibleColumnLayout;
@@ -67,7 +68,7 @@ export default class AppController extends Controller {
 
   /** Compute & write current UI state into the shared layout model */
   private _updateUIState(): void {
-    const uiState = this._fclHelper.getCurrentUIState();
+    const uiState: UIState = this._fclHelper.getCurrentUIState();
     this.oLayoutModel.setProperty("/layout", uiState.layout);
     this.oLayoutModel.setProperty(
       "/actionButtonsInfo",
@@ -84,18 +85,18 @@ export default class AppController extends Controller {
 
   /** When user clicks FCL arrows, keep model in sync and re-nav with new layout */
   public onFlexibleColumnLayoutStateChange(oEvent: any): void {
-    const bArrow = oEvent.getParameter(
+    const isArrow = oEvent.getParameter(
       "isNavigationArrow"
     ) as FlexibleColumnLayout$StateChangeEvent;
-    const sLayout = oEvent.getParameter("layout") as UIState;
-    const oABI = oEvent.getParameter("actionButtonsInfo") as UIState;
+    const sLayout = oEvent.getParameter("layout") as LayoutType;
+    const oABI = oEvent.getParameter("actionButtonsInfo") as UIState["actionButtonsInfo"];
 
     // keep model in sync (used by buttons’ visibility + handlers)
     this.oLayoutModel.setProperty("/layout", sLayout);
     this.oLayoutModel.setProperty("/actionButtonsInfo", oABI);
 
     // if user clicked an arrow, re-nav to the same route with the new layout
-    if (bArrow && this._currentRouteName) {
+    if (isArrow && this._currentRouteName) {
       const mNav = { ...this._currentArgs, layout: sLayout };
       this.oRouter.navTo(this._currentRouteName, mNav, true); // replace hash
     }

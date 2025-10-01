@@ -1,14 +1,15 @@
 // webapp/Component.ts
-import UIComponent from "sap/ui/core/UIComponent";
-import JSONModel from "sap/ui/model/json/JSONModel";
 import * as fLibrary from "sap/f/library";
 import Event from "sap/ui/base/Event";
-import Router from "sap/ui/core/routing/Router";
 import { Route$PatternMatchedEvent } from "sap/ui/core/routing/Route";
+import Router from "sap/ui/core/routing/Router";
+import UIComponent from "sap/ui/core/UIComponent";
+import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
+import { LayoutVM } from "./models/viewmodels";
 
 type LayoutType = fLibrary.LayoutType;
 
-/** 
+/**
  * @namespace sap.ui.prui5
  */
 export default class Component extends UIComponent {
@@ -18,7 +19,7 @@ export default class Component extends UIComponent {
   };
 
   /** default/unnamed model → {/layout}, {/actionButtonsInfo} */
-  private _oLayoutModel!: JSONModel;
+  private _oLayoutModel!: TypedJSONModel<LayoutVM>;
   private _currentRouteName?: string;
   private _currentArgs: Record<string, any> = {};
 
@@ -29,9 +30,10 @@ export default class Component extends UIComponent {
   public init(): void {
     super.init();
 
-    this._oLayoutModel = new JSONModel({
+    this._oLayoutModel = new TypedJSONModel<LayoutVM>({
       layout: fLibrary.LayoutType.OneColumn as LayoutType,
       actionButtonsInfo: {},
+      busy: false,
     });
     this.setModel(this._oLayoutModel); // unnamed default model
 
@@ -66,7 +68,7 @@ export default class Component extends UIComponent {
   }
 
   /** Small helpers (optional) */
-  public getLayoutModel(): JSONModel {
+  public getLayoutModel(): TypedJSONModel<LayoutVM> {
     return this._oLayoutModel;
   }
 
@@ -74,7 +76,7 @@ export default class Component extends UIComponent {
     return { name: this._currentRouteName, args: this._currentArgs };
   }
 
-  public destroy(): void {
+  public destroy(...args: unknown[]): void {
     const oRouter: Router = this.getRouter();
     if (this._onBeforeRouteMatchedBound) {
       oRouter.detachBeforeRouteMatched(this._onBeforeRouteMatchedBound, this);
@@ -82,6 +84,6 @@ export default class Component extends UIComponent {
     if (this._onRouteMatchedBound) {
       oRouter.detachRouteMatched(this._onRouteMatchedBound, this);
     }
-    super.destroy();
+    super.destroy(...(args as []));
   }
 }

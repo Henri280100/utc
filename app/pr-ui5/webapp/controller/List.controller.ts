@@ -1,23 +1,24 @@
-import Controller from "sap/ui/core/mvc/Controller";
-import MessageBox from "sap/m/MessageBox";
-import Event from "sap/ui/base/Event";
 import * as fLibrary from "sap/f/library";
+import MessageBox from "sap/m/MessageBox";
+import Table from "sap/m/Table";
+import Event from "sap/ui/base/Event";
+import Controller from "sap/ui/core/mvc/Controller";
+import View from "sap/ui/core/mvc/View";
+import Router from "sap/ui/core/routing/Router";
+import UIComponent from "sap/ui/core/UIComponent";
 import Filter from "sap/ui/model/Filter";
 import FilterOperator from "sap/ui/model/FilterOperator";
-import Sorter from "sap/ui/model/Sorter";
-import Router from "sap/ui/core/routing/Router";
-import View from "sap/ui/core/mvc/View";
-import Table from "sap/m/Table";
 import ListBinding from "sap/ui/model/ListBinding";
-import UIComponent from "sap/ui/core/UIComponent";
+import Sorter from "sap/ui/model/Sorter";
 import formatter from "../models/formatter";
 
 export default class ListController extends Controller {
-  private oView: any;
+  private oView: View;
   private _bDescendingSort: boolean = false;
   private oRequisitionTable: any;
   private oRouter: Router | undefined;
   public formatter = formatter;
+  
   public onInit(): void {
     // View & Router
     const view = this.getView();
@@ -63,18 +64,15 @@ export default class ListController extends Controller {
     oBinding.sort(oSorter);
   }
 
-  public onMenuItemSelected(oEvent: Event): void {
-    
-  }
+  public onMenuItemSelected(oEvent: Event): void {}
 
-  public onMultiInputValueHelpRequest(): void {
-
-  }
+  public onMultiInputValueHelpRequest(): void {}
 
   public onMultipleInputTokenUpdate(): void {}
 
   public onGoButtonPress(): void {}
 
+  public onFilterOverflowToolbarButtonPress(): void {}
 
   onColumnListItemPress(oEvent: Event) {
     if (!this.oRouter) return;

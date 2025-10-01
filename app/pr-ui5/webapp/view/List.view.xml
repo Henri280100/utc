@@ -35,19 +35,19 @@
             class="sapUiSmallMarginEnd"
           >
             <Label
-              text="Sale Order Number"
-              labelFor="idSalesOrderIDMultiInput"
+              text="Purchasing Group"
+              labelFor="idPurchasingGroupIDMultiInput"
             />
             <MultiInput
-              id="idSalesOrderIDMultiInput"
-              placeholder="Search by Sales Order No"
+              id="idPurchasingGroupIDMultiInput"
+              placeholder="Search by PG"
               showValueHelp="true"
               valueHelpRequest=".onMultiInputValueHelpRequest"
               tokenUpdate=".onMultiInputTokenUpdate"
             >
               <core:Item
-                key="{salesOrder>SalesOrderID}"
-                text="{salesOrder>SalesOrderID}"
+                key="{PurchaseRequisition>PurchasingGroup/purchasingGroup}"
+                text="{PurchaseRequisition>PurchasingGroup/purchasingGroup}"
               />
             </MultiInput>
           </VBox>
@@ -224,7 +224,7 @@
                 />
                 <Text text="{PurchaseRequisition>material/material}" />
                 <Text text="{
-                        path: 'PurchaseRequisition>material/materialDescriptions/0/materialDescriptions',
+                        path: 'PurchaseRequisition>material/materialDescriptions',
                         targetType: 'any',
                         formatter: '.formatter.pickDescriptionByUILang'
                       }" />
