@@ -12,6 +12,7 @@ import ListBinding from "sap/ui/model/ListBinding";
 import Sorter from "sap/ui/model/Sorter";
 import formatter from "../models/formatter";
 
+
 export default class ListController extends Controller {
   private oView: View;
   private _bDescendingSort: boolean = false;

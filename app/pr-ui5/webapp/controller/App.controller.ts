@@ -12,7 +12,9 @@ import Controller from "sap/ui/core/mvc/Controller";
 import { Route$PatternMatchedEvent } from "sap/ui/core/routing/Route";
 import Router from "sap/ui/core/routing/Router";
 import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
-import { LayoutVM } from "webapp/models/viewmodels";
+import { LayoutVM } from "../models/viewmodels";
+
+
 
 type LayoutType = fLibrary.LayoutType;
 

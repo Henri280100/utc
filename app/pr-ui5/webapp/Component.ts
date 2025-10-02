@@ -7,6 +7,7 @@ import UIComponent from "sap/ui/core/UIComponent";
 import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
 import { LayoutVM } from "./models/viewmodels";
 
+
 type LayoutType = fLibrary.LayoutType;
 
 /**

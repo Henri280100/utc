@@ -1,14 +1,15 @@
 import { UIState } from "sap/f/FlexibleColumnLayoutSemanticHelper";
 import * as fLibrary from "sap/f/library";
 import MessageToast from "sap/m/MessageToast";
-import UIComponent from "sap/ui/core/UIComponent";
 import Controller from "sap/ui/core/mvc/Controller";
 import View from "sap/ui/core/mvc/View";
 import { Route$BeforeMatchedEvent } from "sap/ui/core/routing/Route";
 import Router from "sap/ui/core/routing/Router";
 import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
-import { LayoutVM } from "webapp/models/viewmodels";
 import formatter from "../models/formatter";
+import { LayoutVM } from "../models/viewmodels";
+import { attachPatternMatchedRoutes } from "../routing/routeBinder";
+import { bindPRDetail } from "../bindings/purchaseRequisition";
 
 export default class DetailController extends Controller {
   private oRouter!: Router;
@@ -23,19 +24,17 @@ export default class DetailController extends Controller {
     return ownerComponent.getModel("layout") as TypedJSONModel<LayoutVM>;
   }
 
+  private _detachRoutes?: () => void;
+
   public formatter = formatter;
   public onInit(): void {
-    const comp = this.getOwnerComponent() as UIComponent | undefined;
-    if (!comp) {
-      throw new Error("No owner component");
-    }
-    this.oRouter = comp.getRouter(); // to focus button after layout change
-    this.oRouter
-      .getRoute("detail")!
-      .attachPatternMatched(this._onObjectMatched, this);
-    this.oRouter
-      .getRoute("List")!
-      .attachPatternMatched(this._onObjectMatched, this);
+    const { router, detach } = attachPatternMatchedRoutes(
+      this,
+      ["List", "detail"],
+      this._onObjectMatched
+    );
+    this.oRouter = router;
+    this._detachRoutes = detach;
   }
 
   private _onObjectMatched(oEvent: Route$BeforeMatchedEvent) {
@@ -49,83 +48,11 @@ export default class DetailController extends Controller {
 
     const sPath = decodeURIComponent(ctxPathEncoded);
 
-    this.oView.bindElement({
-      model: "PurchaseRequisition",
-      path: sPath,
-      parameters: {
-        // top-level PR fields only (no navs here)
-        $select: [
-          "purchaseRequisition",
-          "purchaseReqnItem",
-          "quantity",
-          "baseUnit",
-          "deliveryDate",
-          "releaseStatus",
-          "requisitionDate",
-          "requisitioner",
-          "storageLocation",
-          "PurchaseRequisitionType",
-        ],
-        $expand: {
-          // PR → material (assoc, one)
-          material: {
-            $select: [
-              "material",
-              "materialType",
-              "industrySector",
-              "baseUnit",
-              "creationDate",
-            ],
-            $expand: {
-              materialDescriptions: {
-                $select: ["language", "materialDescriptions"],
-              },
-            },
-          },
-          // PR → plant (assoc, one)
-          plant: {
-            $select: ["plant", "plantName", "city", "country"],
-            $expand: {
-              storageLocations: {
-                $select: ["storageLocation", "storageLocationDescription"],
-              },
-            },
-          },
-          // PR → PurchasingGroup (assoc, one)
-          PurchasingGroup: {
-            $select: ["purchasingGroup", "purchasingGroupDescription"],
-          },
-          // PR → accountAssignment (composition, to-many)
-          accountAssignment: {
-            $select: [
-              "purchaseRequisition",
-              "purchaseReqnItem",
-              "acctAssignment",
-              "acctAssignmentCategory",
-              "glAccount",
-              "costCenter",
-              "order",
-            ],
-          },
-          // PR → purchasingInfoRecords (assoc, to-many via material)
-          purchasingInfoRecords: {
-            $select: ["purchasingInfoRecord"],
-            $expand: {
-              supplier: {
-                $select: [
-                  "supplier",
-                  "supplierName",
-                  "country",
-                  "city",
-                  "street",
-                ],
-              },
-              // add purchasingOrgData $select if you actually show it
-            },
-          },
-        },
-      },
-    });
+    const m = this.getView().getModel("PurchaseRequisition");
+    console.log("MOdel: ", m);
+    console.log("sPath:", sPath);
+
+    bindPRDetail(this.getView(), sPath);
   }
 
   /* =========================
