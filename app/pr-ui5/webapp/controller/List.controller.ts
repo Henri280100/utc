@@ -11,7 +11,18 @@ import FilterOperator from "sap/ui/model/FilterOperator";
 import ListBinding from "sap/ui/model/ListBinding";
 import Sorter from "sap/ui/model/Sorter";
 import formatter from "../models/formatter";
-
+import Dialog from "sap/m/Dialog";
+import SmartFilterBar from "sap/ui/comp/smartfilterbar/SmartFilterBar";
+import { applyVHSearch } from "../services/valuehelp/applyVHSearch";
+import VBox from "sap/m/VBox";
+import Button from "sap/m/Button";
+import Column from "sap/m/Column";
+import Text from "sap/m/Text";
+import ColumnListItem from "sap/m/ColumnListItem";
+import { VHSearchConfig } from "../types";
+import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
+import MultiInput from "sap/m/MultiInput";
+import Token from "sap/m/Token";
 
 export default class ListController extends Controller {
   private oView: View;
@@ -19,7 +30,11 @@ export default class ListController extends Controller {
   private oRequisitionTable: any;
   private oRouter: Router | undefined;
   public formatter = formatter;
-  
+
+  private _vhDialog?: Dialog;
+  private _vhTable?: Table;
+  private _vhSfb?: SmartFilterBar;
+
   public onInit(): void {
     // View & Router
     const view = this.getView();
@@ -65,11 +80,112 @@ export default class ListController extends Controller {
     oBinding.sort(oSorter);
   }
 
+  onSettingOverflowToobarButtonPress(): void {}
+
   public onMenuItemSelected(oEvent: Event): void {}
 
-  public onMultiInputValueHelpRequest(): void {}
+  public async onMultiInputValueHelpRequest(): Promise<void> {
+    await this._ensureValueHelp();
+    this._vhDialog!.open();
+  }
 
-  public onMultipleInputTokenUpdate(): void {}
+  private async _ensureValueHelp(): Promise<void> {
+    if (this._vhDialog) return;
+
+    // dialog shell
+    this._vhDialog = new Dialog({
+      title: "Purchasing Groups",
+      draggable: true,
+      resizable: true,
+      contentWidth: "800px",
+      contentHeight: "70%",
+      content: new VBox({ fitContainer: true }),
+      beginButton: new Button({
+        text: "Ok",
+        press: () => this._applyVHSelectionToTokens(),
+      }),
+      endButton: new Button({
+        text: "Cancel",
+        press: () => this._vhDialog!.close(),
+      }),
+      afterClose: () => {},
+    });
+    this.getView().addDependent(this._vhDialog);
+
+    const fragment = await this.loadFragment({
+      name: "sap.ui.prui5.view.fragment.GenericVHSmartFB",
+      id: this.createId("idPurchasingGroupVH"),
+    });
+
+    (this._vhDialog.getContent()[0] as VBox).addItem(fragment as any);
+
+    this._vhSfb = this.byId("idSmartFilterBar") as SmartFilterBar;
+
+    this._vhTable = new Table({
+      id: this.createId("idPGTable"),
+      mode: "MultiSelect",
+      growing: true,
+      columns: [
+        new Column({ header: new Text({ text: "PG" }) }),
+        new Column({ header: new Text({ text: "Description" }) }),
+      ],
+    });
+
+    const template = new ColumnListItem({
+      cells: [
+        new Text({ text: "{PurchaseRequisition>purchasingGroup}" }),
+        new Text({ text: "{PurchaseRequisition>purchasingGroupDescription}" })
+      ],
+    });
+
+    this._vhTable.bindItems({
+      path: "PurchaseRequisition>/PurchasingGroup",
+      template,
+      parameters: {
+        $select: ["purchasingGroup", "purchasingGroupDescription"],
+      },
+    });
+
+    (this._vhDialog.getContent()[0] as VBox).addItem(this._vhTable);
+
+    const config: VHSearchConfig = {
+      modelName: "PurchaseRequisition",
+      tableId: this._vhTable.getId(),
+      basicSearchPaths: ["purchasingGroup", "purchasingGroupDescription"],
+      useODataSearch: false,
+    };
+
+    this._vhSfb?.setModel(new TypedJSONModel<VHSearchConfig>(config), "vh");
+  }
+  private _applyVHSelectionToTokens(): void {
+    const multipleInput = this.byId(
+      "idPurchasingGroupIDMultiInput"
+    ) as MultiInput;
+    if (!multipleInput || !this._vhTable) {
+      this._vhDialog?.close();
+      return;
+    }
+
+    const selectedItem = this._vhTable.getSelectedItems();
+    multipleInput.removeAllTokens();
+
+    selectedItem.forEach((item) => {
+      const context = item.getBindingContext("PurchaseRequisition");
+      if (!context) return;
+
+      const key = context.getProperty("purchasingGroup") as string;
+      const text =
+        context.getProperty("purchasingGroupDescription" as string) || key;
+      multipleInput.addToken(new Token({ key, text }));
+    });
+    this._vhDialog?.close();
+  }
+
+  public onVHSearch(e: Event): void {
+    applyVHSearch(this, e.getSource() as SmartFilterBar);
+  }
+
+  public onMultiInputTokenUpdate(): void {}
 
   public onGoButtonPress(): void {}
 

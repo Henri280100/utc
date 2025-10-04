@@ -123,9 +123,9 @@
           <OverflowToolbarButton
             icon="sap-icon://add"
             text="Create"
-            id="idAddOverflowToolbarButton"
+            id="idCreateOverflowToolbarButton"
             type="Emphasized"
-            press=".onAddOverflowToolbarButtonPress"
+            press=".onCreateOverflowToolbarButtonPress"
           />
           <OverflowToolbarButton
             icon="sap-icon://sort"

@@ -1,0 +1,14 @@
+<c:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:c="sap.ui.core"
+	xmlns:smartfilterbar="sap.ui.comp.smartfilterbar"
+>
+	<smartfilterbar:SmartFilterBar
+		id="idSmartFilterBar"
+		search=".onSmartFilterBarSearch"
+		enableBasicSearch="true"
+		persistencyKey="UniqueAndStablePersistenceKey"
+		isRunningInValueHelpDialog="true"
+	/>
+	
+</c:FragmentDefinition>

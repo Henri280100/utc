@@ -2,19 +2,17 @@ import { UIState } from "sap/f/FlexibleColumnLayoutSemanticHelper";
 import * as fLibrary from "sap/f/library";
 import MessageToast from "sap/m/MessageToast";
 import Controller from "sap/ui/core/mvc/Controller";
-import View from "sap/ui/core/mvc/View";
 import { Route$BeforeMatchedEvent } from "sap/ui/core/routing/Route";
 import Router from "sap/ui/core/routing/Router";
 import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
+import { bindPRDetail } from "../bindings";
 import formatter from "../models/formatter";
 import { LayoutVM } from "../models/viewmodels";
-import { attachPatternMatchedRoutes } from "../routing/routeBinder";
-import { bindPRDetail } from "../bindings/purchaseRequisition";
+import { attachPatternMatchedRoutes } from "../routing";
 
 export default class DetailController extends Controller {
   private oRouter!: Router;
   private _ctxPathEncoded!: string;
-  private oView!: View;
 
   private layoutModel(): TypedJSONModel<LayoutVM> {
     const ownerComponent = this.getOwnerComponent();
@@ -24,17 +22,14 @@ export default class DetailController extends Controller {
     return ownerComponent.getModel("layout") as TypedJSONModel<LayoutVM>;
   }
 
-  private _detachRoutes?: () => void;
-
   public formatter = formatter;
   public onInit(): void {
-    const { router, detach } = attachPatternMatchedRoutes(
+    const { router } = attachPatternMatchedRoutes(
       this,
       ["List", "detail"],
       this._onObjectMatched
     );
     this.oRouter = router;
-    this._detachRoutes = detach;
   }
 
   private _onObjectMatched(oEvent: Route$BeforeMatchedEvent) {
@@ -48,10 +43,6 @@ export default class DetailController extends Controller {
 
     const sPath = decodeURIComponent(ctxPathEncoded);
 
-    const m = this.getView().getModel("PurchaseRequisition");
-    console.log("MOdel: ", m);
-    console.log("sPath:", sPath);
-
     bindPRDetail(this.getView(), sPath);
   }
 
@@ -61,7 +52,7 @@ export default class DetailController extends Controller {
 
   handleFullScreen(): void {
     const nextLayout =
-      (this.layoutModel().getProperty(
+      (this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/fullScreen"
       ) as UIState["layout"]) ?? fLibrary.LayoutType.MidColumnFullScreen;
 
@@ -73,7 +64,7 @@ export default class DetailController extends Controller {
 
   handleExitFullScreen(): void {
     const nextLayout =
-      (this.layoutModel().getProperty(
+      (this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/exitFullScreen"
       ) as UIState["layout"]) ?? fLibrary.LayoutType.TwoColumnsMidExpanded;
 
@@ -85,7 +76,7 @@ export default class DetailController extends Controller {
 
   handleClose(): void {
     const nextLayout =
-      (this.layoutModel().getProperty(
+      (this.layoutModel()?.getProperty(
         "/actionButtonsInfo/midColumn/closeColumn"
       ) as UIState["layout"]) ?? fLibrary.LayoutType.OneColumn;
 
