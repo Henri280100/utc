@@ -1,28 +1,29 @@
 import * as fLibrary from "sap/f/library";
+import Column from "sap/m/Column";
+import ColumnListItem from "sap/m/ColumnListItem";
+import Input from "sap/m/Input";
 import MessageBox from "sap/m/MessageBox";
+import MultiInput from "sap/m/MultiInput";
 import Table from "sap/m/Table";
+import Text from "sap/m/Text";
+import Token from "sap/m/Token";
 import Event from "sap/ui/base/Event";
+import FilterBar from "sap/ui/comp/filterbar/FilterBar";
+import FilterGroupItem from "sap/ui/comp/filterbar/FilterGroupItem";
+import ValueHelpDialog from "sap/ui/comp/valuehelpdialog/ValueHelpDialog";
+import Fragment from "sap/ui/core/Fragment";
 import Controller from "sap/ui/core/mvc/Controller";
 import View from "sap/ui/core/mvc/View";
 import Router from "sap/ui/core/routing/Router";
 import UIComponent from "sap/ui/core/UIComponent";
 import Filter from "sap/ui/model/Filter";
 import FilterOperator from "sap/ui/model/FilterOperator";
+import FilterType from "sap/ui/model/FilterType";
 import ListBinding from "sap/ui/model/ListBinding";
 import Sorter from "sap/ui/model/Sorter";
 import formatter from "../models/formatter";
-import Dialog from "sap/m/Dialog";
-import SmartFilterBar from "sap/ui/comp/smartfilterbar/SmartFilterBar";
-import { applyVHSearch } from "../services/valuehelp/applyVHSearch";
-import VBox from "sap/m/VBox";
-import Button from "sap/m/Button";
-import Column from "sap/m/Column";
-import Text from "sap/m/Text";
-import ColumnListItem from "sap/m/ColumnListItem";
 import { VHSearchConfig } from "../types";
-import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
-import MultiInput from "sap/m/MultiInput";
-import Token from "sap/m/Token";
+import SearchField from "sap/m/SearchField";
 
 export default class ListController extends Controller {
   private oView: View;
@@ -31,9 +32,19 @@ export default class ListController extends Controller {
   private oRouter: Router | undefined;
   public formatter = formatter;
 
-  private _vhDialog?: Dialog;
+  private _vhDialog?: ValueHelpDialog;
   private _vhTable?: Table;
-  private _vhSfb?: SmartFilterBar;
+  private _vhSfb?: FilterBar;
+  private _vhdSearch?: SearchField;
+  private _vhCfg: VHSearchConfig = {
+    tableId: "idPurchaseRequisitionTable",
+    modelName: "PurchaseRequisition",
+    entityPath: "/PurchasingGroups",
+    keyPath: "purchasingGroup",
+    textPath: "purchasingGroupDescription",
+    select: ["purchasingGroup", "purchasingGroupDescription"],
+    basicSearchPaths: ["purchasingGroup", "purchasingGroupDescription"],
+  };
 
   public onInit(): void {
     // View & Router
@@ -92,70 +103,95 @@ export default class ListController extends Controller {
   private async _ensureValueHelp(): Promise<void> {
     if (this._vhDialog) return;
 
-    // dialog shell
-    this._vhDialog = new Dialog({
-      title: "Purchasing Groups",
-      draggable: true,
-      resizable: true,
-      contentWidth: "800px",
-      contentHeight: "70%",
-      content: new VBox({ fitContainer: true }),
-      beginButton: new Button({
-        text: "Ok",
-        press: () => this._applyVHSelectionToTokens(),
-      }),
-      endButton: new Button({
-        text: "Cancel",
-        press: () => this._vhDialog!.close(),
-      }),
-      afterClose: () => {},
+    // 1) Load the reusable VHD fragment
+    const fragId = this.createId("PGVHD");
+    await Fragment.load({
+      id: fragId,
+      name: "sap.ui.prui5.view.fragment.GenericVHDialog",
+      controller: this,
     });
+
+    this._vhDialog = Fragment.byId(
+      fragId,
+      "idSmartFilterBar"
+    ) as ValueHelpDialog;
+    this._vhSfb = Fragment.byId(fragId, "vhdFilterBar") as FilterBar;
     this.getView().addDependent(this._vhDialog);
 
-    const fragment = await this.loadFragment({
-      name: "sap.ui.prui5.view.fragment.GenericVHSmartFB",
-      id: this.createId("idPurchasingGroupVH"),
+    // 2) Configure VHD (key/description for tokens)
+    this._vhDialog?.setTitle("Purchasing Groups");
+    this._vhDialog?.setSupportMultiselect(true);
+    this._vhDialog.setSupportRanges(false);
+    this._vhDialog.setKey(this._vhCfg.keyPath);
+    this._vhDialog.setDescriptionKey(this._vhCfg.textPath);
+    this._vhDialog.setBasicSearchText("")
+    this._vhDialog.attachSearch(this._applyVHFilters.bind(this));
+
+
+    const mi = this.byId("idPurchasingGroupIDMultiInput") as MultiInput;
+    if (mi) this._vhDialog.setTokens(mi.getTokens());
+
+    // 3) FilterBar: add a basic search (on the bar, like your screenshot)
+    this._vhdSearch = new SearchField({
+      width: "100%",
+      placeholder: "Search",
+      search: (e) => this._applyVHFilters(e.getParameter("query") || ""),
+      // (optional) liveChange: (e) => this._applyVHFilters(e.getParameter("newValue") || "")
     });
+    (this._vhSfb as FilterBar)?.setBasicSearch(this._vhdSearch);
 
-    (this._vhDialog.getContent()[0] as VBox).addItem(fragment as any);
+    // show the filter line by default (optional)
+    (this._vhSfb as FilterBar)?.setFilterBarExpanded?.(true);
 
-    this._vhSfb = this.byId("idSmartFilterBar") as SmartFilterBar;
+    // add two simple fields so “Filters/Clear/Hide Filters” are enabled
+    this._vhSfb?.addFilterGroupItem(
+      new FilterGroupItem({
+        groupName: "__$INTERNAL$",
+        name: this._vhCfg.keyPath, // "purchasingGroup"
+        label: "purchasingGroup",
+        control: new Input({ placeholder: "purchasingGroup" }),
+        visibleInAdvancedArea: true,
+        visibleInFilterBar: true,
+      })
+    );
+    this._vhSfb?.addFilterGroupItem(
+      new FilterGroupItem({
+        groupName: "__$INTERNAL$",
+        name: this._vhCfg.textPath, // "purchasingGroupDescription"
+        label: "purchasingGroupDescription",
+        control: new Input({ placeholder: "purchasingGroupDescription" }),
+        visibleInAdvancedArea: true,
+        visibleInFilterBar: true,
+      })
+    );
 
+    // 4) Result table + binding
+    const modelName = this._vhCfg?.modelName;
     this._vhTable = new Table({
-      id: this.createId("idPGTable"),
       mode: "MultiSelect",
       growing: true,
       columns: [
-        new Column({ header: new Text({ text: "PG" }) }),
-        new Column({ header: new Text({ text: "Description" }) }),
+        new Column({ header: new Text({ text: "purchasingGroup" }) }),
+        new Column({
+          header: new Text({ text: "purchasingGroupDescription" }),
+        }),
       ],
     });
-
-    const template = new ColumnListItem({
+    const row = new ColumnListItem({
       cells: [
-        new Text({ text: "{PurchaseRequisition>purchasingGroup}" }),
-        new Text({ text: "{PurchaseRequisition>purchasingGroupDescription}" })
+        new Text({ text: `{${modelName}>${this._vhCfg.keyPath}}` }),
+        new Text({ text: `{${modelName}>${this._vhCfg.textPath}}` }),
       ],
     });
-
     this._vhTable.bindItems({
-      path: "PurchaseRequisition>/PurchasingGroup",
-      template,
-      parameters: {
-        $select: ["purchasingGroup", "purchasingGroupDescription"],
-      },
+      path: `${modelName}>${this._vhCfg.entityPath}`,
+      template: row,
+      parameters: { $select: this._vhCfg.select },
     });
+    this._vhDialog.setTable(this._vhTable);
 
-    (this._vhDialog.getContent()[0] as VBox).addItem(this._vhTable);
-
-    const config: VHSearchConfig = {
-      modelName: "PurchaseRequisition",
-      tableId: this._vhTable.getId(),
-      basicSearchPaths: ["purchasingGroup", "purchasingGroupDescription"],
-      useODataSearch: false,
-    };
-
-    this._vhSfb?.setModel(new TypedJSONModel<VHSearchConfig>(config), "vh");
+    // let dialog layout itself after wiring
+    this._vhDialog.update();
   }
   private _applyVHSelectionToTokens(): void {
     const multipleInput = this.byId(
@@ -181,11 +217,69 @@ export default class ListController extends Controller {
     this._vhDialog?.close();
   }
 
-  public onVHSearch(e: Event): void {
-    applyVHSearch(this, e.getSource() as SmartFilterBar);
+  public onValueHelpDialogSearch(e: any): void {
+    const q = (e.getParameter("value") as string) || "";
+    this._applyVHFilters(q);
   }
 
-  public onMultiInputTokenUpdate(): void {}
+  public onFilterBarSearch(): void {
+    const q = this._vhdSearch?.getValue() || "";
+    this._applyVHFilters(q);
+  }
+
+  /** Build filters from VHD basic search + FilterBar fields, apply to table */
+  private _applyVHFilters(query: string): void {
+    const b = this._vhTable?.getBinding("items") as ListBinding | null;
+    if (!b) return;
+
+    const filters: Filter[] = [];
+
+    // A) basic search → OR across ID + Description
+    const q = (query || "").trim();
+    if (q) {
+      filters.push(
+        new Filter({
+          filters: [
+            new Filter(this._vhCfg.keyPath, FilterOperator.Contains, q),
+            new Filter(this._vhCfg.textPath, FilterOperator.Contains, q),
+          ],
+          and: false,
+        })
+      );
+    }
+
+    // B) explicit field inputs from FilterBar
+    const items = (this._vhSfb as any).getFilterGroupItems?.() as
+      | FilterGroupItem[]
+      | undefined;
+    (items ?? []).forEach((fgi) => {
+      const name = (fgi as any).getName?.() as string;
+      const ctrl = (fgi as any).getControl?.() as Input | undefined;
+      const val = ctrl?.getValue?.();
+      if (name && val)
+        filters.push(new Filter(name, FilterOperator.Contains, val));
+    });
+
+    b.filter(filters, FilterType.Application);
+  }
+
+  public onValueHelpDialogOk(e: any): void {
+    const tokens = e.getParameter("tokens") as Token[]; // created using key/descriptionKey
+    const mi = this.byId("idPurchasingGroupIDMultiInput") as MultiInput;
+    mi.removeAllTokens();
+    tokens.forEach((t) => mi.addToken(t.clone()));
+    this._vhDialog?.close();
+  }
+  public onValueHelpDialogCancel(): void {
+    this._vhDialog?.close();
+  }
+  public onValueHelpDialogAfterClose(): void {
+    /* optional cleanup */
+  }
+
+  public onMultiInputTokenUpdate(): void {
+    this._applyVHSelectionToTokens();
+  }
 
   public onGoButtonPress(): void {}
 

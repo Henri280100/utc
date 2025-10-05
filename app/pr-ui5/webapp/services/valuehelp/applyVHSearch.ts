@@ -3,12 +3,11 @@ import SmartFilterBar from "sap/ui/comp/smartfilterbar/SmartFilterBar";
 import Controller from "sap/ui/core/mvc/Controller";
 import Filter from "sap/ui/model/Filter";
 import FilterOperator from "sap/ui/model/FilterOperator";
-import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
-import { VHSearchConfig } from "../../types";
-
 import FilterType from "sap/ui/model/FilterType";
-import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
+import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
 import ListBinding from "sap/ui/model/ListBinding";
+import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
+import { VHSearchConfig } from "../../types";
 
 export function applyVHSearch(controller: Controller, sfb: SmartFilterBar) {
   const config = (

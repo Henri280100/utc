@@ -17,6 +17,7 @@
     }
   },
   "sap.ui5": {
+    "flexEnabled": true,
     "rootView": {
       "viewName": "sap.ui.prui5.view.App",
       "type": "XML",

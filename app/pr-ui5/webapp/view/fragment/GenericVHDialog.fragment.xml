@@ -1,0 +1,29 @@
+<c:FragmentDefinition
+	xmlns="sap.ui.comp.valuehelpdialog"
+	xmlns:c="sap.ui.core"
+	xmlns:filterbar="sap.ui.comp.filterbar"
+>
+	<ValueHelpDialog
+		id="idSmartFilterBar"
+		title="Value Help"
+		supportMultiselect="true"
+		supportRanges="false"
+		ok=".onValueHelpDialogOk"
+		cancel=".onValueHelpDialogCancel"
+		afterClose=".onValueHelpDialogAfterClose"
+		busyIndicatorDelay="0"
+		basicSearchText=""
+	>
+		<!-- fires when user types in VHD search -->
+		<filterBar>
+			<filterbar:FilterBar
+				id="idFilterBar"
+				advancedMode="true"
+				isRunningInValueHelpDialog="true"
+				search=".onFilterBarSearch"
+			>
+				<filterbar:filterGroupItems ></filterbar:filterGroupItems>
+			</filterbar:FilterBar>
+		</filterBar>
+	</ValueHelpDialog>
+</c:FragmentDefinition>
