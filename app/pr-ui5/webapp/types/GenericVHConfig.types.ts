@@ -25,14 +25,11 @@ export type GenericVHConfig = {
   useODataSearch?: boolean;
 
   /** Suggestions config (optional) */
-  suggestion?: {
-    /** Path to read suggestions from (usually same as entityPath) */
-    entityPath?: string; // default: entityPath
-    /** Which property to show as suggestion text (fallbacks to keyPath) */
-    displayPath?: string; // default: textPath || keyPath
-    /** Optional additional text (small) e.g. description under code */
-    secondaryPath?: string; // default: undefined
-    /** Max suggestions to fetch */
-    maxItems?: number; // default: 8
+ suggestion?: {                  // OPTIONAL (enable suggestions)
+    enabled?: boolean;            // default: false
+    entityPath?: string;          // default: cfg.entityPath
+    displayPath?: string;         // default: cfg.textPath || cfg.keyPath
+    secondaryPath?: string;       // optional right-side text
+    maxItems?: number;            // default: 8
   };
 };

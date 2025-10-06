@@ -8,18 +8,19 @@ import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
 import ListBinding from "sap/ui/model/ListBinding";
 import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
 import { VHSearchConfig } from "../../types";
+import FilterBar from "sap/ui/comp/filterbar/FilterBar";
 
-export function applyVHSearch(controller: Controller, sfb: SmartFilterBar) {
+export function applyVHSearch(controller: Controller, sfb: SmartFilterBar | FilterBar, queryOverride?: string) {
   const config = (
     sfb.getModel("vh") as TypedJSONModel<VHSearchConfig> | null
   ).getData();
 
   if (!config) throw new Error("VH config model ('vh') is missing.");
-
-  const raw = sfb.getFilters?.();
+  
+  const raw = (sfb as SmartFilterBar)?.getFilters?.();
   const sfbFilters: Filter[] = raw ? (Array.isArray(raw) ? raw : [raw]) : [];
 
-  const query = sfb.getBasicSearchValue?.() as string | undefined;
+  const query = (queryOverride ?? (sfb as FilterBar).getBasicSearchValue?.()) as string | undefined;
 
   const basic =
     query && config.basicSearchPaths.length

@@ -1,1 +1,2 @@
-export * from './VH.types';
+export * from "./GenericVHConfig.types";
+export * from "./VHSearchConfig.types"

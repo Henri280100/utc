@@ -8,11 +8,9 @@
 		title="Value Help"
 		supportMultiselect="true"
 		supportRanges="false"
-		ok=".onValueHelpDialogOk"
-		cancel=".onValueHelpDialogCancel"
-		afterClose=".onValueHelpDialogAfterClose"
 		busyIndicatorDelay="0"
 		basicSearchText=""
+		draggable="true"
 	>
 		<!-- fires when user types in VHD search -->
 		<filterBar>
