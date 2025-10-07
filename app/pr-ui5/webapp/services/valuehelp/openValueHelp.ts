@@ -3,7 +3,7 @@ import ColumnM from "sap/m/Column";
 import ColumnListItem from "sap/m/ColumnListItem";
 import Label from "sap/m/Label";
 import MultiInput from "sap/m/MultiInput";
-import SearchField from "sap/m/SearchField";
+import SearchField, { $SearchFieldSettings } from "sap/m/SearchField";
 import SuggestionItem from "sap/m/SuggestionItem";
 import TableM from "sap/m/Table";
 import Text from "sap/m/Text";
@@ -25,19 +25,7 @@ import TableUI from "sap/ui/table/Table";
 import { GenericVHConfig, VHSearchConfig } from "../../types";
 import { applyVHSearch } from "./applyVHSearch";
 
-function debounce<T extends Function>(
-  func: T,
-  delay: number
-): (...args: any[]) => void {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return function (this: any, ...args: any[]) {
-    const context = this;
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(context, args);
-    }, delay);
-  };
-}
+
 
 export async function openValueHelp(
   controller: Controller,
@@ -48,181 +36,166 @@ export async function openValueHelp(
 ): Promise<void> {
   const view = controller.getView();
   const fragId =
-    (controller as Controller).createId?.(
-      `${fragmentIdPrefix}_${Date.now()}`
-    ) || `${fragmentIdPrefix}_${Date.now()}`;
+    (controller as any).createId?.(`${fragmentIdPrefix}_${Date.now()}`) ||
+    `${fragmentIdPrefix}_${Date.now()}`;
 
-  await Fragment.load({
-    id: fragId,
-    name: fragmentName,
-    controller,
-  });
+  await Fragment.load({ id: fragId, name: fragmentName, controller });
 
-  const valueHelpDialog = Fragment.byId(
-    fragId,
-    "idSmartFilterBar"
-  ) as ValueHelpDialog;
-  const filterBar = Fragment.byId(fragId, "idFilterBar") as FilterBar;
-  view.addDependent(valueHelpDialog);
+  const vhd = Fragment.byId(fragId, "idSmartFilterBar") as ValueHelpDialog;
+  const fb  = Fragment.byId(fragId, "idFilterBar") as FilterBar;
+  view.addDependent(vhd);
 
-  // dialog basics
-  valueHelpDialog.setTitle(valueHelpDialog.getTitle() || "Select");
-  valueHelpDialog.setSupportMultiselect(!!config.multi);
-  valueHelpDialog.setSupportRanges(true);
-  valueHelpDialog.setKey(config.keyPath);
-  valueHelpDialog.setBusyIndicatorDelay(0);
-  valueHelpDialog.setBusy(true);
-  if (config.textPath) valueHelpDialog.setDescriptionKey(config.textPath);
-  valueHelpDialog.setBasicSearchText("");
+  // ---- Dialog basics
+  vhd.setTitle(vhd.getTitle() || "Select");
+  vhd.setSupportMultiselect(!!config.multi);
+  vhd.setSupportRanges(true);
+  vhd.setKey(config.keyPath);
+  if (config.textPath) vhd.setDescriptionKey(config.textPath);
+  vhd.setBusyIndicatorDelay(0);          // no need to call setBusy(true)
 
-  const rangeKeyFields = (config.filterFields ?? []).map((f) => ({
-    label: f.label,
-    key: f.path,
-    type: "string",
-    typeInstance: new TypeString(),
+  // Range key fields (cast due to d.ts type bug)
+  const rkf = (config.filterFields ?? []).map(f => ({
+    label: f.label, key: f.path, type: "string", typeInstance: new TypeString()
   }));
+  (vhd as any).setRangeKeyFields(rkf);
 
-  (valueHelpDialog as any)?.setRangeKeyFields(rangeKeyFields);
+  // Seed tokens from the calling MultiInput
+  const mi = controller.byId(multipleInputId) as MultiInput;
+  if (mi) vhd.setTokens(mi.getTokens());
 
-  // Seed tokens
-  const multipleInput = controller.byId(multipleInputId) as MultiInput;
-  if (multipleInput) valueHelpDialog.setTokens(multipleInput.getTokens());
+  // ---- FilterBar toolbar + basic search
+  fb.setUseToolbar(true);
+  (fb as any).setShowGoOnFB?.(true);
+  (fb as any).setShowClearOnFB?.(true);
+  (fb as any).setShowFilterConfiguration?.(true);
+  (fb as any).setFilterBarExpanded?.(true);
 
-  filterBar.setUseToolbar(true);
-  (filterBar as FilterBar).setShowGoOnFB(true);
-  (filterBar as FilterBar).setShowClearOnFB(true);
-  (filterBar as FilterBar).setShowFilterConfiguration(true);
-  (filterBar as FilterBar).setFilterBarExpanded(true);
+  // Hide variant management to dodge sap.ui.fl requirement
+  (fb as any).getVariantManagement?.()?.setVisible(false);
 
-  // Basic Search field (with OR without suggestions)
-  const searchField = new SearchField({
+  const sf = new SearchField({
     width: "100%",
     placeholder: "Search",
-  });
+    // suggestions (optional)
+    showSuggestion: !!config.suggestion?.enabled
+  } as $SearchFieldSettings);
 
   if (config.suggestion?.enabled) {
-    searchField.setEnableSuggestions(true);
-    searchField.attachSuggest(async (e) => {
-      const query = (e.getParameter("suggestValue") as string) || "";
-      await fillSuggestions(searchField, controller, config, query);
+    sf.attachSuggest(async (e) => {
+      const q = (e.getParameter("suggestValue") as string) || "";
+      // your existing fillSuggestions(...) util
+      await fillSuggestions(sf, controller, config, q);
     });
   }
+  sf.attachSearch(() => fb.search());
+  (fb as any).setBasicSearch(sf); // runtime API
 
-  searchField.attachSearch(() => filterBar.search());
-  (filterBar as FilterBar).setBasicSearch(searchField);
+  // Filter fields as token-capable controls
+  (config.filterFields ?? []).forEach((f) => {
+    const fieldMI = new MultiInput({ placeholder: f.label, showValueHelp: true });
+    const debounced = debounce(() => fb.search(), 250);
+    fieldMI.attachLiveChange(debounced);
+    fieldMI.attachTokenUpdate(debounced);
 
-  (config.filterFields ?? []).forEach((filter) => {
-    const mi = new MultiInput({
-      placeholder: filter.label,
-      showValueHelp: true,
-    });
-
-    mi.attachLiveChange(debounce(() => filterBar.search(), 250));
-    mi.attachTokenUpdate(debounce(() => filterBar.search(), 250));
-
-    filterBar.addFilterGroupItem(
+    fb.addFilterGroupItem(
       new FilterGroupItem({
-        groupName: "__$INTERNAL$",
-        name: filter.path,
-        label: filter.label,
-        control: mi,
-        visibleInFilterBar: true,
+        groupName: "_BASIC",
+        name: f.path,
+        label: f.label,
+        control: fieldMI,
+        visibleInAdvancedArea: true
       })
     );
   });
 
-  // Check if we are on a desktop
-  const isDesktop = !!Device.system.desktop;
-  let table: TableM | TableUI;
+  // ---- Table wiring: use ONLY the VHD’s internal table
+  const table = await vhd.getTableAsync();
+  const release = () => vhd.update();
 
-  if (isDesktop) {
-    const uiTable = new TableUI({
-      selectionMode: config.multi ? "MultiToggle" : "Single",
-    });
+  const isUiTable = (t: any): t is TableUI => !!t?.bindRows;
+  const isMTable  = (t: any): t is TableM => !!t?.bindItems;
+
+  if (isUiTable(table)) {
+    // columns
     config.columns.forEach((c) => {
       const col = new ColumnUI({
         label: new Label({ text: c.label }),
-        template: new Text({
-          text: `{${config.modelName}>${c.path}}`,
-          wrapping: false,
-        }),
+        template: new Text({ text: `{${config.modelName}>${c.path}}`, wrapping: false })
       });
-      (col as ColumnUI).data({ fieldName: c.path });
-      uiTable.addColumn(col);
+      (col as any).data({ fieldName: c.path });
+      table.addColumn(col);
     });
-    uiTable.bindAggregation("rows", {
+    // bind rows (V4: $select string)
+    table.bindAggregation("rows", {
       path: `${config.modelName}>${config.entityPath}`,
-      parameters: config.select?.length
-        ? { $select: config.select }
-        : undefined,
-      events: { dataReceived: () => valueHelpDialog.update() },
+      parameters: config.select?.length ? { $select: config.select.join(",") } : undefined
     });
-    table = uiTable;
-  } else {
-    const mTable = new TableM({
-      mode: config.multi ? "MultiSelect" : "SingleSelectMaster",
-      growing: true,
-    });
+    table.attachEvent("rowsUpdated", release);
+
+  } else if (isMTable(table)) {
+    // columns
     config.columns.forEach((c) =>
-      mTable.addColumn(new ColumnM({ header: new Label({ text: c.label }) }))
+      table.addColumn(new ColumnM({ header: new Label({ text: c.label }) }))
     );
+    // row template
     const row = new ColumnListItem({
-      cells: config.columns.map(
-        (c) => new Text({ text: `{${config.modelName}>${c.path}}` })
-      ),
+      cells: config.columns.map((c) => new Text({ text: `{${config.modelName}>${c.path}}` }))
     });
-    mTable.bindAggregation("items", {
+    // bind items
+    table.bindAggregation("items", {
       path: `${config.modelName}>${config.entityPath}`,
       template: row,
-      parameters: config.select?.length
-        ? { $select: config.select }
-        : undefined,
-      events: { dataReceived: () => valueHelpDialog.update() },
+      parameters: config.select?.length ? { $select: config.select.join(",") } : undefined
     });
-    table = mTable;
+    table.attachUpdateFinished(release);
   }
 
-  valueHelpDialog.setTable(table);
-  valueHelpDialog.setFilterBar(filterBar);
-  valueHelpDialog.update();
+  // hook up FB and clear busy once
+  vhd.setFilterBar(fb);
+  release();
 
-  const vhConfig: VHSearchConfig = {
+  // Expose table id for your 2-arg applyVHSearch
+  const vhCfg: VHSearchConfig = {
     modelName: config.modelName,
-    tableId: table.getId(),
+    tableId: (table as any).getId(),
     basicSearchPaths: config.basicSearchPaths,
     useODataSearch: !!config.useODataSearch,
     entityPath: config.entityPath,
     keyPath: config.keyPath,
     textPath: config.textPath,
-    select: config.select,
+    select: config.select
   } as any;
+  fb.setModel(new TypedJSONModel<VHSearchConfig>(vhCfg), "vh");
 
-  filterBar.setModel(new TypedJSONModel<VHSearchConfig>(vhConfig), "vh");
+  // Go button → apply filters
+  fb.attachSearch(() => runApply());
 
-  filterBar.attachSearch(() => runApply());
-
-  valueHelpDialog.attachOk((e) => {
-    const tokens = e.getParameter("tokens") as Token[]; // created using key/descriptionKey
-    if (multipleInput) {
-      multipleInput.removeAllTokens();
-      tokens.forEach((t) => multipleInput.addToken(t.clone()));
+  // OK / Cancel
+  vhd.attachOk((e) => {
+    const tokens = e.getParameter("tokens") as Token[];
+    if (mi) {
+      mi.removeAllTokens();
+      tokens.forEach((t) => mi.addToken(t.clone()));
     }
-    valueHelpDialog.close();
+    vhd.close();
   });
-
-  valueHelpDialog.attachCancel(() => valueHelpDialog.close());
-  valueHelpDialog.attachAfterClose(() => valueHelpDialog.destroy());
-  valueHelpDialog.open();
+  vhd.attachCancel(() => vhd.close());
+  vhd.attachAfterClose(() => vhd.destroy());
+  vhd.open();
 
   function runApply(): void {
-    const original = (filterBar as any).getBasicSearchValue;
-    // shim so your existing helper reads the FilterBar basic search text:
-    (filterBar as FilterBar).getBasicSearchValue = () => searchField.getValue();
-    applyVHSearch(controller, filterBar); // ← your 2-arg function
-    (filterBar as FilterBar).getBasicSearchValue = original;
+    const original = (fb as any).getBasicSearchValue;
+    (fb as any).getBasicSearchValue = () => sf.getValue();
+    applyVHSearch(controller, fb);     // your existing helper
+    (fb as any).getBasicSearchValue = original;
   }
 }
 
+// tiny debounce helper
+function debounce<T extends (...a: any[]) => void>(fn: T, ms = 250): T {
+  let t: any;
+  return ((...args: any[]) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); }) as T;
+}
 
 async function fillSuggestions(
   searchField: SearchField,
