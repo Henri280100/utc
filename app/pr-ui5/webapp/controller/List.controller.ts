@@ -1,30 +1,21 @@
 import * as fLibrary from "sap/f/library";
-import Column from "sap/m/Column";
-import ColumnListItem from "sap/m/ColumnListItem";
-import Input from "sap/m/Input";
 import MessageBox from "sap/m/MessageBox";
 import MultiInput from "sap/m/MultiInput";
 import Table from "sap/m/Table";
-import Text from "sap/m/Text";
 import Token from "sap/m/Token";
 import Event from "sap/ui/base/Event";
-import FilterBar from "sap/ui/comp/filterbar/FilterBar";
-import FilterGroupItem from "sap/ui/comp/filterbar/FilterGroupItem";
 import ValueHelpDialog from "sap/ui/comp/valuehelpdialog/ValueHelpDialog";
-import Fragment from "sap/ui/core/Fragment";
 import Controller from "sap/ui/core/mvc/Controller";
 import View from "sap/ui/core/mvc/View";
 import Router from "sap/ui/core/routing/Router";
 import UIComponent from "sap/ui/core/UIComponent";
 import Filter from "sap/ui/model/Filter";
 import FilterOperator from "sap/ui/model/FilterOperator";
-import FilterType from "sap/ui/model/FilterType";
 import ListBinding from "sap/ui/model/ListBinding";
 import Sorter from "sap/ui/model/Sorter";
 import formatter from "../models/formatter";
-import { GenericVHConfig, VHSearchConfig } from "../types";
-import SearchField from "sap/m/SearchField";
 import { openValueHelp } from "../services";
+import { GenericVHConfig } from "../types";
 
 export default class ListController extends Controller {
   private oView: View;

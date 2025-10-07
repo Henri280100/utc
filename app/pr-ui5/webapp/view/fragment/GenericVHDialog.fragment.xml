@@ -8,7 +8,6 @@
 		title="Value Help"
 		supportMultiselect="true"
 		supportRanges="false"
-		busyIndicatorDelay="0"
 		basicSearchText=""
 		draggable="true"
 	>
@@ -18,9 +17,9 @@
 				id="idFilterBar"
 				advancedMode="true"
 				isRunningInValueHelpDialog="true"
-				search=".onFilterBarSearch"
 			>
-				<filterbar:filterGroupItems ></filterbar:filterGroupItems>
+				<filterbar:filterGroupItems>
+				</filterbar:filterGroupItems>
 			</filterbar:FilterBar>
 		</filterBar>
 	</ValueHelpDialog>

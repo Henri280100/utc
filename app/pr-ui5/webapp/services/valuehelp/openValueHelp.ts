@@ -1,7 +1,6 @@
 import Log from "sap/base/Log";
 import ColumnM from "sap/m/Column";
 import ColumnListItem from "sap/m/ColumnListItem";
-import Input from "sap/m/Input";
 import Label from "sap/m/Label";
 import MultiInput from "sap/m/MultiInput";
 import SearchField from "sap/m/SearchField";
@@ -20,17 +19,32 @@ import FilterOperator from "sap/ui/model/FilterOperator";
 import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
 import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
 import ODataModel from "sap/ui/model/odata/v4/ODataModel";
+import TypeString from "sap/ui/model/type/String";
 import ColumnUI from "sap/ui/table/Column";
 import TableUI from "sap/ui/table/Table";
 import { GenericVHConfig, VHSearchConfig } from "../../types";
 import { applyVHSearch } from "./applyVHSearch";
 
+function debounce<T extends Function>(
+  func: T,
+  delay: number
+): (...args: any[]) => void {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return function (this: any, ...args: any[]) {
+    const context = this;
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(context, args);
+    }, delay);
+  };
+}
+
 export async function openValueHelp(
   controller: Controller,
   config: GenericVHConfig,
   multipleInputId: string,
-  fragmentName = "sap.ui.prui5.view.fragment.GenericVHDialog",
-  fragmentIdPrefix = "GEN_VH"
+  fragmentName: string = "sap.ui.prui5.view.fragment.GenericVHDialog",
+  fragmentIdPrefix: string = "GEN_VH"
 ): Promise<void> {
   const view = controller.getView();
   const fragId =
@@ -54,10 +68,21 @@ export async function openValueHelp(
   // dialog basics
   valueHelpDialog.setTitle(valueHelpDialog.getTitle() || "Select");
   valueHelpDialog.setSupportMultiselect(!!config.multi);
-  valueHelpDialog.setSupportRanges(false);
+  valueHelpDialog.setSupportRanges(true);
   valueHelpDialog.setKey(config.keyPath);
+  valueHelpDialog.setBusyIndicatorDelay(0);
+  valueHelpDialog.setBusy(true);
   if (config.textPath) valueHelpDialog.setDescriptionKey(config.textPath);
   valueHelpDialog.setBasicSearchText("");
+
+  const rangeKeyFields = (config.filterFields ?? []).map((f) => ({
+    label: f.label,
+    key: f.path,
+    type: "string",
+    typeInstance: new TypeString(),
+  }));
+
+  (valueHelpDialog as any)?.setRangeKeyFields(rangeKeyFields);
 
   // Seed tokens
   const multipleInput = controller.byId(multipleInputId) as MultiInput;
@@ -86,18 +111,27 @@ export async function openValueHelp(
   searchField.attachSearch(() => filterBar.search());
   (filterBar as FilterBar).setBasicSearch(searchField);
 
-  (config.filterFields ?? []).forEach((filter) =>
+  (config.filterFields ?? []).forEach((filter) => {
+    const mi = new MultiInput({
+      placeholder: filter.label,
+      showValueHelp: true,
+    });
+
+    mi.attachLiveChange(debounce(() => filterBar.search(), 250));
+    mi.attachTokenUpdate(debounce(() => filterBar.search(), 250));
+
     filterBar.addFilterGroupItem(
       new FilterGroupItem({
         groupName: "__$INTERNAL$",
         name: filter.path,
         label: filter.label,
-        control: new Input({ placeholder: filter.label }),
+        control: mi,
         visibleInFilterBar: true,
       })
-    )
-  );
+    );
+  });
 
+  // Check if we are on a desktop
   const isDesktop = !!Device.system.desktop;
   let table: TableM | TableUI;
 
@@ -189,14 +223,7 @@ export async function openValueHelp(
   }
 }
 
-/**
- * Fill suggestions for a SearchField based on the query given.
- * @param {SearchField} searchField - the SearchField to fill suggestions for
- * @param {Controller} controller - the controller to get the model from
- * @param {GenericVHConfig} config - the configuration for the value help
- * @param {string} typed - the query to search for
- * @returns {Promise<void>} - a promise that resolves when the suggestions have been filled
- */
+
 async function fillSuggestions(
   searchField: SearchField,
   controller: Controller,
