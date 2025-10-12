@@ -53,7 +53,7 @@
     }
   },
   "sapux": [
-    "app/purchase-requisition",
+    "app/pr-ui5",
     "app/purchase-order",
     "app/good-receipt",
     "app/supplier-invoice-processing",

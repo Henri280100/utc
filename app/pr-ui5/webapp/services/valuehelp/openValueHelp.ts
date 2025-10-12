@@ -13,7 +13,6 @@ import FilterGroupItem from "sap/ui/comp/filterbar/FilterGroupItem";
 import ValueHelpDialog from "sap/ui/comp/valuehelpdialog/ValueHelpDialog";
 import Fragment from "sap/ui/core/Fragment";
 import Controller from "sap/ui/core/mvc/Controller";
-import Device from "sap/ui/Device";
 import Filter from "sap/ui/model/Filter";
 import FilterOperator from "sap/ui/model/FilterOperator";
 import TypedJSONModel from "sap/ui/model/json/TypedJSONModel";
