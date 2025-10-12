@@ -1,0 +1,38 @@
+specVersion: "4.0"
+metadata:
+  name: prui5
+type: application
+framework:
+  name: SAPUI5
+  version: "1.140.0"
+  libraries:
+    - name: sap.ui.core
+    - name: sap.m
+    - name: sap.f
+    - name: sap.ui.comp
+    - name: sap.ui.fl
+    - name: sap.ui.mdc
+    - name: sap.uxap
+    - name: themelib_sap_horizon
+builder:
+  customTasks:
+    - name: ui5-tooling-transpile-task
+      afterTask: replaceVersion
+      configuration:
+        srcDir: src
+        outDir: webapp
+        tsconfig: tsconfig.json
+server:
+  customMiddleware:
+    - name: ui5-tooling-transpile-middleware
+      afterMiddleware: compression
+      configuration:
+        srcDir: src
+        tsconfig: tsconfig.json
+    - name: ui5-middleware-simpleproxy
+      afterMiddleware: compression
+      mountPath: /odata/v4
+      configuration:
+        baseUri: http://localhost:4004/odata/v4
+    - name: ui5-middleware-livereload
+      afterMiddleware: compression

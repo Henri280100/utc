@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./library","sap/uxap/ObjectPageDynamicHeaderContent","./ObjectPageDynamicHeaderTitleRenderer","sap/base/Log","sap/f/DynamicPageTitle"],function(e,t,r,n,a){"use strict";var o=a.extend("sap.uxap.ObjectPageDynamicHeaderTitle",{metadata:{interfaces:["sap.uxap.IHeaderTitle"],library:"sap.uxap"},renderer:r});o.prototype.isDynamic=function(){return true};o.prototype.getCompatibleHeaderContentClass=function(){return t};o.prototype.supportsToggleHeaderOnTitleClick=function(){return true};o.prototype.supportsTitleInHeaderContent=function(){return false};o.prototype.supportsAdaptLayoutForDomElement=function(){return false};o.prototype.supportsBackgroundDesign=function(){return true};o.prototype.getTitleText=function(){return this._getTitleText()};o.prototype.getHeaderDesign=function(){return e.ObjectPageHeaderDesign.Light};o.prototype.snap=function(e){this._toggleState(false,e);this._updateARIAState(false)};o.prototype.unSnap=function(e){this._toggleState(true,e);this._updateARIAState(true)};o.prototype._adaptObjectPageHeaderIndentifierLine=function(e,t){};return o});
+//# sourceMappingURL=ObjectPageDynamicHeaderTitle.js.map

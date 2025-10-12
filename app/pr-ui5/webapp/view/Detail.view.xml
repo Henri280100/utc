@@ -1,0 +1,267 @@
+<mvc:View
+  displayBlock="true"
+  controllerName="sap.ui.prui5.controller.Detail"
+  xmlns="sap.uxap"
+  xmlns:m="sap.m"
+  xmlns:mvc="sap.ui.core.mvc"
+>
+  <ObjectPageLayout
+    id="idObjectPageLayout"
+    showTitleInHeaderContent="true"
+    alwaysShowContentHeader="false"
+    preserveHeaderStateOnScroll="false"
+    headerContentPinnable="true"
+    isChildPage="true"
+    upperCaseAnchorBar="false"
+    showFooter="true"
+  >
+    <!-- ===== Header ===== -->
+    <headerTitle>
+      <ObjectPageDynamicHeaderTitle id="_IDGenObjectPageDynamicHeaderTitle">
+        <expandedHeading>
+          <m:ObjectHeader id="_IDGenObjectHeader1" title="Purchase Requisition {PurchaseRequisition>purchaseRequisition}">
+            <m:attributes>
+              <m:ObjectAttribute id="_IDGenObjectAttribute"
+                title="PR Number"
+                text="{PurchaseRequisition>purchaseRequisition}"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute1"
+                title="Item"
+                text="{PurchaseRequisition>purchaseReqnItem}"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute2"
+                title="Material"
+                text="{PurchaseRequisition>material/material}"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute3"
+                title="Plant"
+                text="{PurchaseRequisition>plant/plant}"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute4"
+                title="Quantity"
+                text="{= ${PurchaseRequisition>quantity} + ' ' + ${PurchaseRequisition>baseUnit} }"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute5"
+                title="Delivery Date"
+                text="{
+                  path: 'PurchaseRequisition>deliveryDate',
+                  type: 'sap.ui.model.odata.type.Date',
+                  formatOptions: {
+                    style: 'medium'
+                  }
+                }"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute6"
+                title="Purchase Group"
+                text="{= ${PurchaseRequisition>PurchasingGroup/purchasingGroup} + ' - ' + ${PurchaseRequisition>PurchasingGroup/purchasingGroupDescription} }"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute7"
+                title="Storage Location"
+                text="{PurchaseRequisition>storageLocation}"
+              />
+              <m:ObjectAttribute id="_IDGenObjectAttribute8"
+                title="Release Status"
+                text="{PurchaseRequisition>releaseStatus}"
+              />
+            </m:attributes>
+          </m:ObjectHeader>
+        </expandedHeading>
+        <navigationActions>
+          <m:OverflowToolbarButton
+            type="Transparent"
+            icon="sap-icon://full-screen"
+            press=".handleFullScreen"
+            id="idEnterFullScreenOverflowToolbarButton"
+            tooltip="Enter Full Screen Mode"
+            visible="{= ${/actionButtonsInfo/midColumn/fullScreen} !== null }"
+          />
+          <m:OverflowToolbarButton
+            type="Transparent"
+            icon="sap-icon://exit-full-screen"
+            press=".handleExitFullScreen"
+            id="idExitFullScreenOverflowToolbarButton"
+            tooltip="Exit Full Screen Mode"
+            visible="{= ${/actionButtonsInfo/midColumn/exitFullScreen} !== null }"
+          />
+          <m:OverflowToolbarButton id="_IDGenOverflowToolbarButton"
+            type="Transparent"
+            icon="sap-icon://decline"
+            press=".handleClose"
+            tooltip="Close middle column"
+            visible="{= ${/actionButtonsInfo/midColumn/closeColumn} !== null }"
+          />
+        </navigationActions>
+      </ObjectPageDynamicHeaderTitle>
+    </headerTitle>
+    <!-- ===== Sections ===== -->
+    <sections>
+      <!-- Supplier (from first Purchasing Info Record) -->
+      <ObjectPageSection id="_IDGenObjectPageSection"
+        titleUppercase="false"
+        title="Supplier"
+      >
+        <subSections>
+          <ObjectPageSubSection id="_IDGenObjectPageSubSection">
+            <blocks>
+              <m:VBox id="_IDGenVBox" class="sapUiSmallMargin">
+                <m:HBox id="_IDGenHBox">
+                  <m:Label id="_IDGenLabel"
+                    text="Supplier:"
+                    width="12rem"
+                  />
+                  <m:Text id="_IDGenText" text="{
+                    path: 'PurchaseRequisition>purchasingInfoRecords',
+                    targetType: 'any',
+                    formatter: '.formatter.pickFirstSupplierId'
+                  }" />
+                </m:HBox>
+                <m:HBox id="_IDGenHBox1">
+                  <m:Label id="_IDGenLabel1"
+                    text="Supplier Name:"
+                    width="12rem"
+                  />
+                  <m:Text id="_IDGenText1" text="{
+                    path: 'PurchaseRequisition>purchasingInfoRecords',
+                    targetType: 'any',
+                    formatter: '.formatter.pickFirstSupplierName'
+                  }" />
+                </m:HBox>
+                <m:HBox id="_IDGenHBox2">
+                  <m:Label id="_IDGenLabel2"
+                    text="Address:"
+                    width="12rem"
+                  />
+                  <m:Text id="_IDGenText2" text="{
+                    path: 'PurchaseRequisition>purchasingInfoRecords',
+                    targetType: 'any',
+                    formatter: '.formatter.pickFirstSupplierAddress'
+                  }" />
+                </m:HBox>
+              </m:VBox>
+            </blocks>
+          </ObjectPageSubSection>
+        </subSections>
+      </ObjectPageSection>
+      <!-- Account Assignment (to-many) -->
+      <ObjectPageSection id="_IDGenObjectPageSection1"
+        titleUppercase="false"
+        title="Account Assignment"
+      >
+        <subSections>
+          <ObjectPageSubSection id="_IDGenObjectPageSubSection1">
+            <blocks>
+              <m:Table
+                id="idAccountAssignmentTable"
+                items="{PurchaseRequisition>accountAssignment}"
+                inset="false"
+                headerText="Account Assignment"
+                class="sapUiResponsiveMargin"
+                width="100%"
+              >
+                <m:columns>
+                  <m:Column id="_IDGenColumn">
+                    <m:Text id="_IDGenText3" text="AA" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn1">
+                    <m:Text id="_IDGenText4" text="Category" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn2">
+                    <m:Text id="_IDGenText5" text="G/L" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn3">
+                    <m:Text id="_IDGenText6" text="Cost Center" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn4">
+                    <m:Text id="_IDGenText7" text="Order" />
+                  </m:Column>
+                </m:columns>
+                <m:items>
+                  <m:ColumnListItem id="_IDGenColumnListItem">
+                    <m:cells>
+                      <m:Text id="_IDGenText8" text="{PurchaseRequisition>acctAssignment}" />
+                      <m:Text id="_IDGenText9" text="{PurchaseRequisition>acctAssignmentCategory}" />
+                      <m:Text id="_IDGenText10" text="{PurchaseRequisition>glAccount}" />
+                      <m:Text id="_IDGenText11" text="{PurchaseRequisition>costCenter}" />
+                      <m:Text id="_IDGenText12" text="{PurchaseRequisition>order}" />
+                    </m:cells>
+                  </m:ColumnListItem>
+                </m:items>
+              </m:Table>
+            </blocks>
+          </ObjectPageSubSection>
+        </subSections>
+      </ObjectPageSection>
+      <!-- Material (1:1 assoc) -->
+      <ObjectPageSection id="_IDGenObjectPageSection2"
+        titleUppercase="false"
+        title="Material"
+      >
+        <subSections>
+          <ObjectPageSubSection id="_IDGenObjectPageSubSection2">
+            <blocks>
+              <m:Table
+                id="idMaterialTable"
+                inset="false"
+                headerText="Material"
+                class="sapUiResponsiveMargin"
+                width="100%"
+              >
+                <m:columns>
+                  <m:Column id="_IDGenColumn5">
+                    <m:Text id="_IDGenText13" text="Material" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn6">
+                    <m:Text id="_IDGenText14" text="Type" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn7">
+                    <m:Text id="_IDGenText15" text="Industry" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn8">
+                    <m:Text id="_IDGenText16" text="Base Unit" />
+                  </m:Column>
+                  <m:Column id="_IDGenColumn9">
+                    <m:Text id="_IDGenText17" text="Description (UI lang)" />
+                  </m:Column>
+                </m:columns>
+                <!-- ONE row bound to the 1:1 nav 'material' -->
+                <m:items>
+                  <m:ColumnListItem id="_IDGenColumnListItem1" binding="{PurchaseRequisition>material}">
+                    <m:cells>
+                      <!-- now relative to 'material' -->
+                      <m:Text id="_IDGenText18" text="{PurchaseRequisition>material}" />
+                      <m:Text id="_IDGenText19" text="{PurchaseRequisition>materialType}" />
+                      <m:Text id="_IDGenText20" text="{PurchaseRequisition>industrySector}" />
+                      <m:Text id="_IDGenText21" text="{PurchaseRequisition>baseUnit}" />
+                      <m:Text id="_IDGenText22" text="{
+                        path: 'PurchaseRequisition>materialDescriptions',
+                        targetType: 'any',
+                        formatter: '.formatter.pickDescriptionByUILang'
+                      }" />
+                    </m:cells>
+                  </m:ColumnListItem>
+                </m:items>
+              </m:Table>
+            </blocks>
+          </ObjectPageSubSection>
+        </subSections>
+      </ObjectPageSection>
+    </sections>
+    <!-- footer untouched -->
+    <footer>
+      <m:OverflowToolbar id="_IDGenOverflowToolbar">
+        <m:ToolbarSpacer id="_IDGenToolbarSpacer" />
+        <m:Button id="_IDGenButton"
+          text="Accept"
+          type="Accept"
+          press=".onAcceptButtonPress"
+        />
+        <!-- keep your buttons or adapt visibility if needed -->
+        <m:Button id="_IDGenButton1"
+          text="Cancel"
+          type="Reject"
+          press=".onCancelButtonPress"
+        />
+      </m:OverflowToolbar>
+    </footer>
+  </ObjectPageLayout>
+</mvc:View>
