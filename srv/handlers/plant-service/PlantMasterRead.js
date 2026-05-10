@@ -1,6 +1,7 @@
 import cds from "@sap/cds";
-import { buildExpand } from "../common/query/BuildExpand";
-import { PlantTree } from "../common/query/PlantTree";
+import { buildExpand } from "../common/query/BuildExpand.js";
+import { PlantTree } from "../common/query/Trees/PlantTree/PlantTree.js";
+
 
 /**
  * Handles READ requests for Plant.

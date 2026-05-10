@@ -1,15 +1,15 @@
 import cds from "@sap/cds";
-import { onReadPlant } from "./PlantMasterRead";
+import { onReadPlant } from "./PlantMasterRead.js";
 import {
   onCreatePlantMaster,
   onCreateStorageLocation,
   onDeletePlantMaster,
   onUpdatePlantMaster,
-} from "./PlantMasterWrite";
+} from "./PlantMasterWrite.js";
 const LOG = cds.log("service.js");
 
 export default function(service) {
-  const { Plant, StorageLocations } = service.entities;
+  const { Plant, StorageLocations } = service.entities || {};
   service.on("READ", Plant, async (req) => {
     try {
       return await onReadPlant(req, Plant);

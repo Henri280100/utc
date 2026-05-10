@@ -1,5 +1,9 @@
 using {master.table as master} from '../../db/schema';
 
+@impl: 'srv/handlers/service.js'
+@(
+    path: '/material-masters',
+)
 service MasterDataService {
 
     // ── Material Master ──────────────────────────────────────

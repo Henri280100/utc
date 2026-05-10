@@ -1,15 +1,16 @@
 import cds from "@sap/cds";
-import { onReadMaterialMaster } from "./MaterialMasterRead";
+import { onReadMaterialMaster } from "./MaterialMasterRead.js";
 import {
   onCreateMaterialMaster,
   onDeleteMaterialMaster,
   onUpdateMaterialMaster,
-} from "./MaterialMasterWrite";
+} from "./MaterialMasterWrite.js";
 
 const LOG = cds.log("service.js");
 
 export default function (service) {
-  const { MaterialMaster } = service.entities;
+  const { MaterialMaster } = service.entities || {};
+
 
   service.on("READ", MaterialMaster, async (req) => {
     try {

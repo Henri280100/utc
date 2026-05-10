@@ -1,9 +1,12 @@
 using {
     transaction.table as tt,
     master.table      as mt
-} from '../../../db/schema';
+} from '../../db/schema';
 
 @impl: 'srv/handlers/service.js'
+@(
+    path: '/purchase-requisitions',
+)
 service PurchaseRequisitionsService {
 
     entity PurchaseRequisition     as projection on tt.PurchaseRequisition

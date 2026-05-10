@@ -1,4 +1,3 @@
-"use strict";
 
 /**
  * @typedef {import('../BuildExpand').ExpandTree} ExpandTree

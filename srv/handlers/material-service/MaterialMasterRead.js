@@ -1,6 +1,6 @@
 import cds from "@sap/cds";
-import { buildExpand } from "../common/query/BuildExpand";
-import { MaterialMasterTree } from "../common/query/MaterialMasterTree";
+import { buildExpand } from "../common/query/BuildExpand.js";
+import { MaterialMasterTree } from "../common/query/Trees/Material/MaterialTree.js";
 
 /**
  * Handles READ requests for MaterialMaster.

@@ -1,5 +1,5 @@
-import { buildExpand } from "../common/query/BuildExpand";
-import { PurchaseRequisitionTree } from "../common/query/PurchaseRequisitionTree";
+import { buildExpand } from "../common/query/BuildExpand.js";
+import { PurchaseRequisitionTree } from "../common/query/Trees/PurchaseRequistion/PurchaseRequisitionTree.js";
 
 /**
  * Handles READ requests for PurchaseRequisition.

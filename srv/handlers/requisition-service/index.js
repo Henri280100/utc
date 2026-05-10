@@ -1,15 +1,31 @@
 import cds from "@sap/cds";
 import { onReadPurchaseRequisition } from "./PurchaseRequisitionRead.js";
-import { onAutoGenerateKey, onCreatePurchaseRequisition } from "./PurchaseRequisitionWrite.js";
+import {
+  onApprovePurchaseRequisition,
+  onAutoGenerateKey,
+  onCreatePurchaseRequisition,
+  onUpdateRejectReason,
+  onUpdateReleaseStatus,
+} from "./PurchaseRequisitionWrite.js";
 
 const LOG = cds.log("service.js");
 
 export default function (service) {
-  const { PurchaseRequisition } = service.entities;
-
-  service.on("createPurchaseRequisition", async (req, service) => {
+  const { PurchaseRequisition } = service.entities || {};
+  service.on("createPurchaseRequisition", async (req) => {
     try {
       return await onCreatePurchaseRequisition(req, service);
+    } catch (error) {
+      req.error(error.message);
+      LOG.error(error.message);
+      LOG.error(error.stack);
+    }
+  });
+
+  // After Read - Expand associations
+  service.on("READ", PurchaseRequisition, async (req) => {
+    try {
+      return await onReadPurchaseRequisition(req, service);
     } catch (error) {
       req.error(error.message);
       LOG.error(error.message);
@@ -28,10 +44,10 @@ export default function (service) {
     }
   });
 
-  // After Read - Expand associations
-  service.on("READ", PurchaseRequisition, async (req) => {
+  // Custom Actions (target must be provided, otherwise CAP registers with an undefined path)
+  service.on("releasePurchaseRequisition", async (req) => {
     try {
-      return await onReadPurchaseRequisition(req, PurchaseRequisition);
+      return await onUpdateReleaseStatus(req, service);
     } catch (error) {
       req.error(error.message);
       LOG.error(error.message);
@@ -39,18 +55,23 @@ export default function (service) {
     }
   });
 
-  // Custom Action: Release PR
-  service.on("releasePurchaseRequisition", async (req) => {
-    const { purchaseRequisition, purchaseReqnItem } = req.data;
-
-    await cds.run(
-      UPDATE(PurchaseRequisition)
-        .set({ releaseStatus: "Released" })
-        .where({ purchaseRequisition, purchaseReqnItem }),
-    );
-
-    return true;
+  service.on("rejectOrder", PurchaseRequisition, async (req) => {
+    try {
+      return await onUpdateRejectReason(req, service);
+    } catch (error) {
+      req.error(error.message);
+      LOG.error(error.message);
+      LOG.error(error.stack);
+    }
   });
 
-  console.log("✅ PurchaseRequisitionService handler loaded");
+  service.on("approve", PurchaseRequisition, async (req) => {
+    try {
+      return await onApprovePurchaseRequisition(req, service);
+    } catch (error) {
+      req.error(error.message);
+      LOG.error(error.message);
+      LOG.error(error.stack);
+    }
+  });
 }
