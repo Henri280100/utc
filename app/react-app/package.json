@@ -16,7 +16,10 @@
     "@ui5/webcomponents-fiori": "^2.21.1",
     "@ui5/webcomponents-react": "^2.21.3",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "react-is": "^19.2.6",
+    "react-router-dom": "^7.15.0",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
