@@ -24,11 +24,14 @@
     "@cap-js/sqlite": "^2",
     "@sap/cds-dk": ">=8",
     "@types/node": "^22.0.0",
-    "@ui5/cli": "^4.0.23",
+    "@ui5/cli": "^4.0.30",
+    "cds-plugin-ui5": "^0.13.6",
+    "cross-env": "^10.1.0",
     "mbt": "^1.2.29",
     "rimraf": "^5.0.5"
   },
   "scripts": {
+    "start:flp": "cross-env PORT=8080 cds watch",
     "start": "cds-serve",
     "watch-purchase-requisition": "cds watch --open purchase-requisition/webapp/index.html?sap-ui-xx-viewCache=false",
     "watch-purchase-order": "cds watch --open purchase-order/webapp/index.html?sap-ui-xx-viewCache=false",

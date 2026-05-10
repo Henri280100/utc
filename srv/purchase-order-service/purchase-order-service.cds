@@ -4,7 +4,7 @@ using {
 } from '../../db/schema';
 
 service PurchaseOrderService {
-            @odata.draft.enabled
+    @odata.draft.enabled
     entity PurchaseDocumentHeader     as projection on tt.PurchasingDocumentHeader
         actions {
             @Core.OperationAvailable: {$value: in.IsActiveEntity}
@@ -26,4 +26,7 @@ service PurchaseOrderService {
     entity VendorMaster               as projection on mt.VendorMaster;
     entity PurchasingInfoRecord       as projection on tt.PurchasingInfoRecord;
     entity PurchasingOrganizationData as projection on mt.PurchasingOrganizationData;
+
+    action createPurchaseRequisition(data: many PurchaseRequisition)                               returns many PurchaseRequisition;
+    action releasePurchaseRequisition(purchaseRequisition: String(10), purchaseReqnItem: String(5)) returns Boolean;
 }

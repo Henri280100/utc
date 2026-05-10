@@ -5,7 +5,7 @@ using {
 
 
 service PurchaseRequisitionsService {
-            @odata.draft.enabled
+
     entity PurchaseRequisition     as projection on tt.PurchaseRequisition
         actions {
 
@@ -45,7 +45,7 @@ service PurchaseRequisitionsService {
 
         };
 
-    @readonly
+    
     entity MaterialMaster          as projection on mt.MaterialMaster;
 
     entity Plant                   as projection on mt.Plant;
@@ -63,4 +63,6 @@ service PurchaseRequisitionsService {
     @readonly
     entity PurchasingInfoRecord    as projection on tt.PurchasingInfoRecord;
 
+    action createPurchaseRequisition(data: many PurchaseRequisition)                               returns many PurchaseRequisition;
+    action releasePurchaseRequisition(purchaseRequisition: String(10), purchaseReqnItem: String(5)) returns Boolean;
 }
