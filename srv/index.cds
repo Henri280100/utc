@@ -4,4 +4,5 @@ using from './requisition-service/purchase-requisition-service';
 using from './purchase-order-service/purchase-order-service';
 using from './info-record-service/purchasing-info-records-service';
 using from './management-service/sourcing-rfq-service';
-
+using from './material-service/MaterialMasterService';
+using from './plant-service/PlantMasterService';
