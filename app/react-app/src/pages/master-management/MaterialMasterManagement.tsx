@@ -1,20 +1,58 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Input,
-  Button,
-  Icon,
-  BusyIndicator,
-  MessageStrip,
-  Select,
-  Option,
-  DatePicker,
-} from "@ui5/webcomponents-react";
+"use client";
 
-// ── Types ────────────────────────────────────────────────────
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Boxes,
+  Plus,
+  Search,
+  Edit3,
+  X,
+  Loader2,
+  Tag,
+  Package,
+  Calendar,
+  FileText,
+  Trash2,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+// Types
 interface MaterialDescription {
-  language: string;
-  materialDescription: string;
+  material: string;
+  language_code: string;
+  materialDescriptions: string;
+}
+
+interface InfoRecord {
+  purchasingInfoRecord: string;
+  material_material: string;
+  supplier_supplier: string;
 }
 
 interface Material {
@@ -25,6 +63,7 @@ interface Material {
   materialGroup_materialGroup?: string;
   creationDate?: string;
   materialDescriptions?: MaterialDescription[];
+  infoRecords?: InfoRecord[];
 }
 
 interface Props {
@@ -58,42 +97,70 @@ const INDUSTRY_SECTORS = [
   { key: "F", label: "F — Food & Beverage" },
 ];
 const BASE_UNITS = ["EA", "KG", "L", "M", "PC", "SET", "BOX", "PAL"];
-type AssociationData = {
-  purchasingInfoRecord?: string;
-  supplier_supplier?: string;
-  materialDocNumber?: string;
-  materialDocYear?: string;
-  materialDocItem?: string;
-  supplierInvoice_supplierInvoice?: string;
-  supplierInvoice_fiscalYear?: string;
-  material_material?: string;
-  plant_plant?: string;
-  storageLocation?: string;
-  quantity?: number;
-  baseUnit?: string;
-  purchaseOrderItem_purchaseOrder?: string;
-  purchaseOrderItem_purchaseOrderItem?: string;
-  movementType?: string;
+
+type AssocState = {
+  materialDescriptions: MaterialDescription[];
+  infoRecords: InfoRecord[];
 };
-// ── Component ────────────────────────────────────────────────
-export default function MaterialMasterManagement({ apiUrl }: Props) {
+
+const emptyAssocState: AssocState = {
+  materialDescriptions: [
+    { material: "", language_code: "EN", materialDescriptions: "" },
+  ],
+  infoRecords: [
+    { purchasingInfoRecord: "", material_material: "", supplier_supplier: "" },
+  ],
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 100, damping: 15 },
+  },
+};
+
+export default function MaterialManagement({ apiUrl }: Props) {
   const qc = useQueryClient();
   const [form, setForm] = useState<typeof EMPTY>(EMPTY);
+  const [assoc, setAssoc] = useState<AssocState>(emptyAssocState);
   const [editing, setEditing] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [panel, setPanel] = useState<"list" | "form">("list");
-  const [associationData, setAssociationData] = useState<AssociationData[]>([]);
 
-  const set = (k: keyof typeof EMPTY) => (e: any) =>
-    setForm((p) => ({ ...p, [k]: e.target?.value ?? e.detail?.value ?? e }));
+  const set = (k: keyof typeof EMPTY, value: string) =>
+    setForm((p) => ({ ...p, [k]: value }));
+
+  const derivedAssoc = useMemo<AssocState>(() => {
+    return {
+      ...assoc,
+      materialDescriptions: assoc.materialDescriptions.map((d) => ({
+        ...d,
+        material: form.material,
+      })),
+      infoRecords: assoc.infoRecords.map((r) => ({
+        ...r,
+        material_material: form.material,
+      })),
+    };
+  }, [assoc, form.material]);
 
   // GET
   const { data: materials = [], isLoading } = useQuery<Material[]>({
     queryKey: ["materials"],
     queryFn: async () => {
       const res = await fetch(
-        `${apiUrl}/MaterialMaster?$expand=materialDescriptions`,
+        `${apiUrl}/MaterialMaster?$expand=materialDescriptions,infoRecords`,
       );
       if (!res.ok) throw new Error("Failed to fetch");
       const j = await res.json();
@@ -105,18 +172,29 @@ export default function MaterialMasterManagement({ apiUrl }: Props) {
     (m) =>
       m.material.toLowerCase().includes(search.toLowerCase()) ||
       m.materialType?.toLowerCase().includes(search.toLowerCase()) ||
-      m.materialDescriptions?.[0]?.materialDescription
+      m.materialDescriptions?.[0]?.materialDescriptions
         ?.toLowerCase()
         .includes(search.toLowerCase()),
   );
 
+  const createPayload = () => ({
+    ...form,
+    materialDescriptions: derivedAssoc.materialDescriptions.filter(
+      (d) => d.language_code && d.materialDescriptions,
+    ),
+    infoRecords: derivedAssoc.infoRecords.filter(
+      (r) => r.purchasingInfoRecord && r.supplier_supplier,
+    ),
+  });
+
   // CREATE
   const createMut = useMutation({
-    mutationFn: async (data: typeof EMPTY) => {
+    mutationFn: async () => {
+      const payload = createPayload();
       const res = await fetch(`${apiUrl}/MaterialMaster`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const e = await res.json();
@@ -128,19 +206,24 @@ export default function MaterialMasterManagement({ apiUrl }: Props) {
       qc.invalidateQueries({ queryKey: ["materials"] });
       setMsg({ text: "Material created successfully.", ok: true });
       setForm(EMPTY);
+      setAssoc(emptyAssocState);
       setPanel("list");
+      setTimeout(() => setMsg(null), 4000);
     },
-    onError: (e: any) =>
-      setMsg({ text: e?.error?.message || "Create failed.", ok: false }),
+    onError: (e: any) => {
+      setMsg({ text: e?.error?.message || "Create failed.", ok: false });
+      setTimeout(() => setMsg(null), 4000);
+    },
   });
 
   // UPDATE
   const updateMut = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof EMPTY }) => {
-      const res = await fetch(`${apiUrl}/MaterialMaster('${id}')`, {
+    mutationFn: async (data: { id: string }) => {
+      const payload = createPayload();
+      const res = await fetch(`${apiUrl}/MaterialMaster('${data.id}')`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const e = await res.json();
@@ -153,10 +236,14 @@ export default function MaterialMasterManagement({ apiUrl }: Props) {
       setMsg({ text: "Material updated successfully.", ok: true });
       setEditing(null);
       setForm(EMPTY);
+      setAssoc(emptyAssocState);
       setPanel("list");
+      setTimeout(() => setMsg(null), 4000);
     },
-    onError: (e: any) =>
-      setMsg({ text: e?.error?.message || "Update failed.", ok: false }),
+    onError: (e: any) => {
+      setMsg({ text: e?.error?.message || "Update failed.", ok: false });
+      setTimeout(() => setMsg(null), 4000);
+    },
   });
 
   const startEdit = (m: Material) => {
@@ -167,592 +254,563 @@ export default function MaterialMasterManagement({ apiUrl }: Props) {
       baseUnit: m.baseUnit,
       materialGroup_materialGroup: m.materialGroup_materialGroup ?? "",
     });
+    setAssoc({
+      materialDescriptions: m.materialDescriptions?.map((d) => ({
+        material: m.material,
+        language_code: d.language_code,
+        materialDescriptions: d.materialDescriptions,
+      })) ?? [
+        { material: m.material, language_code: "EN", materialDescriptions: "" },
+      ],
+      infoRecords: m.infoRecords?.map((r) => ({
+        purchasingInfoRecord: r.purchasingInfoRecord,
+        material_material: m.material,
+        supplier_supplier: r.supplier_supplier,
+      })) ?? [
+        {
+          purchasingInfoRecord: "",
+          material_material: m.material,
+          supplier_supplier: "",
+        },
+      ],
+    });
     setEditing(m.material);
     setPanel("form");
   };
 
   const startCreate = () => {
     setForm(EMPTY);
+    setAssoc(emptyAssocState);
     setEditing(null);
     setPanel("form");
   };
+
   const cancel = () => {
     setForm(EMPTY);
+    setAssoc(emptyAssocState);
     setEditing(null);
     setPanel("list");
   };
-  const submit = () =>
-    editing
-      ? updateMut.mutate({ id: editing, data: form })
-      : createMut.mutate(form);
+
+  const submit = () => {
+    if (editing) updateMut.mutate({ id: editing });
+    else createMut.mutate();
+  };
+
   const isPending = createMut.isPending || updateMut.isPending;
 
-  const addAssociation = () => {
-    setAssociationData([...associationData, {}]);
+  // Association helpers
+  const addDescRow = () => {
+    setAssoc((p) => ({
+      ...p,
+      materialDescriptions: [
+        ...p.materialDescriptions,
+        {
+          material: form.material,
+          language_code: "EN",
+          materialDescriptions: "",
+        },
+      ],
+    }));
   };
 
-  const removeAssociation = (index: number) => {
-    setAssociationData(associationData.filter((_, i) => i !== index));
+  const removeDescRow = (index: number) => {
+    setAssoc((p) => ({
+      ...p,
+      materialDescriptions: p.materialDescriptions.filter(
+        (_, i) => i !== index,
+      ),
+    }));
   };
 
-  const submitAssociationData = async () => {
-    try {
-      const res = await fetch(`${apiUrl}/MaterialMaster`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          infoRecords: associationData
-            .filter((a) => a.purchasingInfoRecord)
-            .map((a) => ({
-              purchasingInfoRecord: a.purchasingInfoRecord,
-              material_material: form.material,
-              supplier_supplier: a.supplier_supplier,
-            })),
-          materialDoc: associationData
-            .filter((a) => a.materialDocNumber)
-            .map((a) => ({
-              materialDocNumber: a.materialDocNumber,
-              materialDocYear: a.materialDocYear,
-              materialDocItem: a.materialDocItem,
-              supplierInvoice_supplierInvoice:
-                a.supplierInvoice_supplierInvoice,
-              supplierInvoice_fiscalYear: a.supplierInvoice_fiscalYear,
-              material_material: form.material,
-              plant_plant: a.plant_plant,
-              storageLocation: a.storageLocation,
-              quantity: a.quantity,
-              baseUnit: a.baseUnit,
-              purchaseOrderItem_purchaseOrder:
-                a.purchaseOrderItem_purchaseOrder,
-              purchaseOrderItem_purchaseOrderItem:
-                a.purchaseOrderItem_purchaseOrderItem,
-              movementType: a.movementType,
-            })),
-        }),
-      });
-      if (!res.ok) throw await res.json();
-      setMsg({ text: "Material master created successfully", ok: true });
-      setAssociationData([]);
-      setForm(EMPTY);
-      qc.invalidateQueries({ queryKey: ["materials"] });
-    } catch (e: Error | any) {
-      setMsg({ text: e.message, ok: false });
-    }
+  const addInfoRow = () => {
+    setAssoc((p) => ({
+      ...p,
+      infoRecords: [
+        ...p.infoRecords,
+        {
+          purchasingInfoRecord: "",
+          material_material: form.material,
+          supplier_supplier: "",
+        },
+      ],
+    }));
+  };
+
+  const removeInfoRow = (index: number) => {
+    setAssoc((p) => ({
+      ...p,
+      infoRecords: p.infoRecords.filter((_, i) => i !== index),
+    }));
   };
 
   return (
-    <div style={S.page}>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+    >
       {/* Header */}
-      <div style={S.header}>
-        <div style={S.headerLeft}>
-          <div
-            style={{
-              ...S.headerIcon,
-              background: "linear-gradient(135deg,#0f4c75,#1b6ca8)",
-            }}
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+      >
+        <div className="flex items-center gap-4">
+          <motion.div
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/25"
+            whileHover={{ scale: 1.05, rotate: 5 }}
           >
-            <Icon name="product" style={{ fontSize: "20px", color: "#fff" }} />
-          </div>
+            <Boxes className="h-7 w-7 text-white" />
+          </motion.div>
           <div>
-            <p style={S.headerSub}>Master Data</p>
-            <h1 style={S.headerTitle}>Material Master</h1>
+            <p className="text-sm text-muted-foreground">Master Data</p>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+              Material Master
+            </h1>
           </div>
         </div>
-        <div style={S.headerRight}>
-          <div style={S.statChip}>
-            <span style={S.statNum}>{materials.length}</span>
-            <span style={S.statLbl}>Materials</span>
-          </div>
-          <Button onClick={startCreate} style={S.newBtn}>
-            <Icon name="add" /> &nbsp;New Material
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="gap-2 rounded-full px-4 py-2">
+            <Boxes className="h-4 w-4" />
+            {materials.length} Materials
+          </Badge>
+          <Button
+            onClick={startCreate}
+            className="gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
+          >
+            <Plus className="h-4 w-4" />
+            New Material
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Message */}
-      {msg && (
-        <div style={{ marginBottom: 14 }}>
-          <MessageStrip
-            design={msg.ok ? "Positive" : "Negative"}
-            onClose={() => setMsg(null)}
+      {/* Message Toast */}
+      <AnimatePresence>
+        {msg && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`flex items-center justify-between rounded-lg border p-4 ${
+              msg.ok
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
+            }`}
           >
-            {msg.text}
-          </MessageStrip>
-        </div>
-      )}
-
-      <div style={S.body}>
-        {/* ── FORM PANEL ── */}
-        {panel === "form" && (
-          <div style={S.formCard}>
-            <div style={S.formHeader}>
-              <div style={S.formHeaderDot} />
-              <span style={S.formHeaderTitle}>
-                {editing ? `Edit — ${editing}` : "New Material"}
-              </span>
-            </div>
-            <div style={S.formBody}>
-              {[
-                {
-                  key: "material",
-                  label: "Material No. *",
-                  placeholder: "e.g. MAT001",
-                  disabled: !!editing,
-                },
-                {
-                  key: "materialGroup_materialGroup",
-                  label: "Material Group",
-                  placeholder: "e.g. USED_CARS",
-                },
-              ].map((f) => (
-                <div key={f.key} style={S.field}>
-                  <label style={S.label}>{f.label}</label>
-                  <Input
-                    value={(form as any)[f.key]}
-                    onInput={set(f.key as any)}
-                    placeholder={f.placeholder}
-                    disabled={f.disabled}
-                    style={S.input}
-                  />
-                </div>
-              ))}
-
-              <div style={S.field}>
-                <label style={S.label}>Material Type *</label>
-                <Select
-                  style={S.input}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      materialType: (e.detail.selectedOption as any).value,
-                    }))
-                  }
-                >
-                  <Option value="">— Select —</Option>
-                  {MATERIAL_TYPES.map((t) => (
-                    <Option
-                      key={t}
-                      value={t}
-                      selected={form.materialType === t}
-                    >
-                      {t}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-
-              <div style={S.field}>
-                <label style={S.label}>Industry Sector *</label>
-                <Select
-                  style={S.input}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      industrySector: (e.detail.selectedOption as any).value,
-                    }))
-                  }
-                >
-                  <Option value="">— Select —</Option>
-                  {INDUSTRY_SECTORS.map((s) => (
-                    <Option
-                      key={s.key}
-                      value={s.key}
-                      selected={form.industrySector === s.key}
-                    >
-                      {s.label}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-
-              <div style={S.field}>
-                <label style={S.label}>Base Unit *</label>
-                <Select
-                  style={S.input}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      baseUnit: (e.detail.selectedOption as any).value,
-                    }))
-                  }
-                >
-                  {BASE_UNITS.map((u) => (
-                    <Option key={u} value={u} selected={form.baseUnit === u}>
-                      {u}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-              {associationData.map((a, index) => (
-                <div key={index}>
-                  <Input
-                    type="text"
-                    value={a.purchasingInfoRecord}
-                    onChange={(e) =>
-                      setAssociationData((p) =>
-                        p.map((_, i) =>
-                          i === index
-                            ? { ...a, purchasingInfoRecord: e.target.value }
-                            : _,
-                        ),
-                      )
-                    }
-                    placeholder="Purchasing Info Record"
-                  />
-                  <Input
-                    type="text"
-                    value={a.supplier_supplier}
-                    onChange={(e) =>
-                      setAssociationData((p) =>
-                        p.map((_, i) =>
-                          i === index
-                            ? { ...a, supplier_supplier: e.target.value }
-                            : _,
-                        ),
-                      )
-                    }
-                    placeholder="Supplier"
-                  />
-                  {/* ... other association fields ... */}
-                  <Button onClick={() => removeAssociation(index)}>
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button onClick={addAssociation}>Add Association</Button>
-              <div style={S.formActions}>
-                <button style={S.cancelBtn} onClick={cancel}>
-                  Cancel
-                </button>
-                <button
-                  style={S.submitBtn}
-                  onClick={submit}
-                  disabled={isPending}
-                >
-                  {isPending
-                    ? "Saving…"
-                    : editing
-                      ? "Update Material"
-                      : "Create Material"}
-                </button>
-              </div>
-            </div>
-          </div>
+            <span className="font-medium">{msg.text}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMsg(null)}
+              className="h-6 w-6"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* ── LIST PANEL ── */}
-        <div
-          style={{ ...S.listCard, flex: panel === "form" ? "1" : "1 1 100%" }}
-        >
-          <div style={S.listHeader}>
-            <div style={S.searchWrap}>
-              <Icon name="search" style={S.searchIcon} />
-              <input
-                style={S.searchInput}
-                placeholder="Search by material, type, description…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <span style={S.listCount}>{filtered.length} records</span>
-          </div>
+      <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+        {/* Form Panel */}
+        <AnimatePresence mode="wait">
+          {panel === "form" && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="max-h-[calc(100vh-200px)] overflow-y-auto"
+            >
+              <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+                <CardHeader className="border-b border-border/50">
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-cyan-500 shadow-lg shadow-cyan-500/50" />
+                    <CardTitle className="text-base font-semibold">
+                      {editing ? `Edit — ${editing}` : "New Material"}
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 p-6">
+                  {/* Basic Fields */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Material No. *
+                    </label>
+                    <Input
+                      value={form.material}
+                      onChange={(e) => set("material", e.target.value)}
+                      placeholder="e.g. MAT001"
+                      disabled={!!editing}
+                      className="border-border/50 bg-secondary/30"
+                    />
+                  </div>
 
-          {isLoading ? (
-            <div style={S.center}>
-              <BusyIndicator active size="L" />
-            </div>
-          ) : (
-            <div style={S.tableWrap}>
-              <table style={S.table}>
-                <thead>
-                  <tr>
-                    {[
-                      "Material",
-                      "Description",
-                      "Type",
-                      "Sector",
-                      "Base Unit",
-                      "Group",
-                      "Actions",
-                    ].map((h) => (
-                      <th key={h} style={S.th}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((m, i) => (
-                    <tr
-                      key={m.material}
-                      style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Material Group
+                    </label>
+                    <div className="relative">
+                      <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={form.materialGroup_materialGroup}
+                        onChange={(e) =>
+                          set("materialGroup_materialGroup", e.target.value)
+                        }
+                        placeholder="e.g. USED_CARS"
+                        className="border-border/50 bg-secondary/30 pl-9"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Material Type *
+                      </label>
+                      <Select
+                        value={form.materialType}
+                        onValueChange={(val) => set("materialType", val)}
+                      >
+                        <SelectTrigger className="border-border/50 bg-secondary/30">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MATERIAL_TYPES.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Base Unit *
+                      </label>
+                      <Select
+                        value={form.baseUnit}
+                        onValueChange={(val) => set("baseUnit", val)}
+                      >
+                        <SelectTrigger className="border-border/50 bg-secondary/30">
+                          <Package className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BASE_UNITS.map((u) => (
+                            <SelectItem key={u} value={u}>
+                              {u}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Industry Sector *
+                    </label>
+                    <Select
+                      value={form.industrySector}
+                      onValueChange={(val) => set("industrySector", val)}
                     >
-                      <td style={S.td}>
-                        <span style={S.matCode}>{m.material}</span>
-                      </td>
-                      <td style={S.td}>
-                        <span style={S.cellPrimary}>
-                          {m.materialDescriptions?.[0]?.materialDescription ??
-                            "—"}
-                        </span>
-                      </td>
-                      <td style={S.td}>
-                        <span style={S.typeBadge}>{m.materialType}</span>
-                      </td>
-                      <td style={S.td}>
-                        <span style={S.cellMuted}>{m.industrySector}</span>
-                      </td>
-                      <td style={S.td}>
-                        <span style={S.unitBadge}>{m.baseUnit}</span>
-                      </td>
-                      <td style={S.td}>
-                        <span style={S.cellMuted}>
-                          {m.materialGroup_materialGroup ?? "—"}
-                        </span>
-                      </td>
-                      <td style={S.td}>
-                        <button style={S.editBtn} onClick={() => startEdit(m)}>
-                          <Icon name="edit" style={{ fontSize: "13px" }} /> Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filtered.length === 0 && (
-                <div style={S.empty}>
-                  <Icon
-                    name="product"
-                    style={{ fontSize: "40px", color: "#d1d5db" }}
-                  />
-                  <p style={S.emptyTxt}>No materials found</p>
-                </div>
-              )}
-            </div>
+                      <SelectTrigger className="border-border/50 bg-secondary/30">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INDUSTRY_SECTORS.map((s) => (
+                          <SelectItem key={s.key} value={s.key}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Associations */}
+                  <Accordion type="multiple" className="w-full">
+                    <AccordionItem
+                      value="descriptions"
+                      className="border-border/50"
+                    >
+                      <AccordionTrigger className="text-sm font-medium">
+                        Material Descriptions
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-3 pt-2">
+                        {assoc.materialDescriptions.map((d, index) => (
+                          <div
+                            key={index}
+                            className="space-y-2 rounded-lg border border-border/50 p-3"
+                          >
+                            <div className="flex gap-2">
+                              <Input
+                                value={d.language_code}
+                                onChange={(e) =>
+                                  setAssoc((p) => ({
+                                    ...p,
+                                    materialDescriptions:
+                                      p.materialDescriptions.map((row, i) =>
+                                        i === index
+                                          ? {
+                                              ...row,
+                                              language_code: e.target.value,
+                                            }
+                                          : row,
+                                      ),
+                                  }))
+                                }
+                                placeholder="Language (EN)"
+                                className="w-20 border-border/50 bg-secondary/30"
+                              />
+                              <Input
+                                value={d.materialDescriptions}
+                                onChange={(e) =>
+                                  setAssoc((p) => ({
+                                    ...p,
+                                    materialDescriptions:
+                                      p.materialDescriptions.map((row, i) =>
+                                        i === index
+                                          ? {
+                                              ...row,
+                                              materialDescriptions:
+                                                e.target.value,
+                                            }
+                                          : row,
+                                      ),
+                                  }))
+                                }
+                                placeholder="Description"
+                                className="flex-1 border-border/50 bg-secondary/30"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeDescRow(index)}
+                                className="h-9 w-9 text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addDescRow}
+                          className="w-full gap-1"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add Description
+                        </Button>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem
+                      value="inforecords"
+                      className="border-border/50"
+                    >
+                      <AccordionTrigger className="text-sm font-medium">
+                        Info Records
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-3 pt-2">
+                        {assoc.infoRecords.map((r, index) => (
+                          <div
+                            key={index}
+                            className="space-y-2 rounded-lg border border-border/50 p-3"
+                          >
+                            <div className="flex gap-2">
+                              <Input
+                                value={r.purchasingInfoRecord}
+                                onChange={(e) =>
+                                  setAssoc((p) => ({
+                                    ...p,
+                                    infoRecords: p.infoRecords.map((row, i) =>
+                                      i === index
+                                        ? {
+                                            ...row,
+                                            purchasingInfoRecord:
+                                              e.target.value,
+                                          }
+                                        : row,
+                                    ),
+                                  }))
+                                }
+                                placeholder="Info Record #"
+                                className="flex-1 border-border/50 bg-secondary/30"
+                              />
+                              <Input
+                                value={r.supplier_supplier}
+                                onChange={(e) =>
+                                  setAssoc((p) => ({
+                                    ...p,
+                                    infoRecords: p.infoRecords.map((row, i) =>
+                                      i === index
+                                        ? {
+                                            ...row,
+                                            supplier_supplier: e.target.value,
+                                          }
+                                        : row,
+                                    ),
+                                  }))
+                                }
+                                placeholder="Supplier"
+                                className="flex-1 border-border/50 bg-secondary/30"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeInfoRow(index)}
+                                className="h-9 w-9 text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addInfoRow}
+                          className="w-full gap-1"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add Info Record
+                        </Button>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={cancel}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={submit}
+                      disabled={isPending}
+                      className="flex-[2] bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                    >
+                      {isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : editing ? (
+                        "Update Material"
+                      ) : (
+                        "Create Material"
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
+
+        {/* List Panel */}
+        <motion.div
+          variants={itemVariants}
+          className={panel === "list" ? "lg:col-span-2" : ""}
+        >
+          <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search materials..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="border-border/50 bg-secondary/30 pl-9"
+                  />
+                </div>
+                <Badge variant="secondary" className="rounded-full">
+                  {filtered.length} records
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Boxes className="h-12 w-12 text-muted-foreground/50" />
+                  <p className="mt-4 text-muted-foreground">
+                    No materials found
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead>Material</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Sector</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Group</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((m) => (
+                      <TableRow key={m.material} className="group">
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="font-mono font-bold"
+                          >
+                            {m.material}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate font-medium">
+                          {m.materialDescriptions?.[0]?.materialDescriptions ??
+                            "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{m.materialType}</Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {INDUSTRY_SECTORS.find(
+                            (s) => s.key === m.industrySector,
+                          )?.label ?? m.industrySector}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="gap-1">
+                            <Package className="h-3 w-3" />
+                            {m.baseUnit}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {m.materialGroup_materialGroup ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startEdit(m)}
+                            className="gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                            Edit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
-
-// ── Styles ───────────────────────────────────────────────────
-const S: Record<string, React.CSSProperties> = {
-  page: {
-    fontFamily: "'DM Sans','Segoe UI',sans-serif",
-    background: "#f1f5f9",
-    minHeight: "100vh",
-    padding: "24px 32px",
-    boxSizing: "border-box",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  headerLeft: { display: "flex", alignItems: "center", gap: 14 },
-  headerIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 4px 12px #1b6ca840",
-  },
-  headerSub: {
-    margin: 0,
-    fontSize: 11,
-    color: "#64748b",
-    letterSpacing: "0.07em",
-    textTransform: "uppercase",
-  },
-  headerTitle: { margin: 0, fontSize: 22, fontWeight: 700, color: "#0f172a" },
-  headerRight: { display: "flex", alignItems: "center", gap: 12 },
-  statChip: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    background: "#fff",
-    border: "1px solid #e2e8f0",
-    borderRadius: 10,
-    padding: "6px 16px",
-  },
-  statNum: { fontSize: 18, fontWeight: 700, color: "#0f172a" },
-  statLbl: {
-    fontSize: 10,
-    color: "#94a3b8",
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-  },
-  newBtn: {
-    background: "linear-gradient(135deg,#0f4c75,#1b6ca8)",
-    color: "#fff",
-    fontWeight: 600,
-    borderRadius: 8,
-  } as any,
-  body: { display: "flex", gap: 20, alignItems: "flex-start" },
-
-  // Form
-  formCard: {
-    width: 340,
-    background: "#fff",
-    borderRadius: 14,
-    boxShadow: "0 2px 8px #0001",
-    overflow: "hidden",
-    flexShrink: 0,
-  },
-  formHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "14px 18px",
-    borderBottom: "1px solid #e2e8f0",
-  },
-  formHeaderDot: {
-    width: 10,
-    height: 10,
-    borderRadius: "50%",
-    background: "#0f4c75",
-  },
-  formHeaderTitle: { fontSize: 14, fontWeight: 600, color: "#0f172a" },
-  formBody: { padding: 18 },
-  field: { marginBottom: 14 },
-  label: {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 600,
-    color: "#475569",
-    marginBottom: 5,
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  input: { width: "100%" } as any,
-  formActions: { display: "flex", gap: 10, marginTop: 20 },
-  cancelBtn: {
-    flex: 1,
-    padding: "9px 0",
-    borderRadius: 8,
-    border: "1px solid #e2e8f0",
-    background: "#f8fafc",
-    color: "#475569",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: 13,
-  },
-  submitBtn: {
-    flex: 2,
-    padding: "9px 0",
-    borderRadius: 8,
-    border: "none",
-    background: "linear-gradient(135deg,#0f4c75,#1b6ca8)",
-    color: "#fff",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: 13,
-  },
-
-  // List
-  listCard: {
-    background: "#fff",
-    borderRadius: 14,
-    boxShadow: "0 2px 8px #0001",
-    overflow: "hidden",
-  },
-  listHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "12px 16px",
-    borderBottom: "1px solid #e2e8f0",
-  },
-  searchWrap: { position: "relative", flex: 1, maxWidth: 360 },
-  searchIcon: {
-    position: "absolute",
-    left: 10,
-    top: "50%",
-    transform: "translateY(-50%)",
-    fontSize: 14,
-    color: "#94a3b8",
-  } as any,
-  searchInput: {
-    width: "100%",
-    padding: "8px 12px 8px 34px",
-    borderRadius: 8,
-    border: "1px solid #e2e8f0",
-    fontSize: 13,
-    outline: "none",
-    background: "#f8fafc",
-    boxSizing: "border-box",
-  },
-  listCount: { fontSize: 12, color: "#64748b", fontWeight: 500 },
-  tableWrap: { overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: 13 } as any,
-  th: {
-    padding: "10px 14px",
-    fontSize: 10,
-    fontWeight: 700,
-    color: "#64748b",
-    textTransform: "uppercase",
-    letterSpacing: "0.07em",
-    background: "#f8fafc",
-    borderBottom: "2px solid #e2e8f0",
-    whiteSpace: "nowrap",
-    textAlign: "left",
-  } as any,
-  td: {
-    padding: "11px 14px",
-    borderBottom: "1px solid #f1f5f9",
-    verticalAlign: "middle",
-  } as any,
-  center: { display: "flex", justifyContent: "center", padding: 60 },
-  empty: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "50px 20px",
-    gap: 10,
-  },
-  emptyTxt: { margin: 0, color: "#9ca3af", fontSize: 14 },
-
-  // Cell styles
-  matCode: {
-    fontFamily: "monospace",
-    fontWeight: 700,
-    fontSize: 13,
-    color: "#0f4c75",
-  },
-  cellPrimary: { fontWeight: 500, color: "#0f172a" },
-  cellMuted: { color: "#64748b", fontSize: 12 },
-  typeBadge: {
-    background: "#dbeafe",
-    color: "#1e40af",
-    padding: "2px 8px",
-    borderRadius: 6,
-    fontSize: 11,
-    fontWeight: 700,
-  },
-  unitBadge: {
-    background: "#f0fdf4",
-    color: "#166534",
-    padding: "2px 8px",
-    borderRadius: 6,
-    fontSize: 11,
-    fontWeight: 600,
-  },
-  editBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: 5,
-    padding: "5px 12px",
-    borderRadius: 7,
-    border: "1px solid #e2e8f0",
-    background: "#f8fafc",
-    color: "#374151",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: 12,
-  },
-};

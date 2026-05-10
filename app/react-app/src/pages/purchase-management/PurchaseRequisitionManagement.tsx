@@ -1,82 +1,58 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  FlexBox,
-  FlexBoxDirection,
-  FlexBoxAlignItems,
-  FlexBoxJustifyContent,
-  FlexBoxWrap,
-  Title,
-  Input,
-  Button,
-  DatePicker,
-  MessageStrip,
-  Card,
-  Icon,
-  BusyIndicator,
-  Label,
-} from "@ui5/webcomponents-react";
+"use client"
 
-const STATUS_CONFIG: Record<
-  string,
-  { color: string; bg: string; label: string }
-> = {
-  REL: { color: "#1a7f5a", bg: "#e6f9f2", label: "Released" },
-  PENDING: { color: "#b45309", bg: "#fef9ec", label: "Pending" },
-  CLOSED: { color: "#374151", bg: "#f3f4f6", label: "Closed" },
-  REJECT: { color: "#b91c1c", bg: "#fef2f2", label: "Rejected" },
-};
+import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  FileText,
+  Plus,
+  Search,
+  X,
+  Loader2,
+  CheckCircle2,
+  Clock,
+  Package,
+  Calendar,
+  Factory,
+  Hash,
+  User,
+  Boxes,
+  Users,
+  ChevronDown,
+} from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+
+const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  REL: { color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10", label: "Released" },
+  PENDING: { color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10", label: "Pending" },
+  CLOSED: { color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-500/10", label: "Closed" },
+  REJECT: { color: "text-red-600 dark:text-red-400", bg: "bg-red-500/10", label: "Rejected" },
+}
 
 const FIELD_CONFIGS = [
-  {
-    key: "material_material",
-    label: "Material No.",
-    placeholder: "e.g. MAT001",
-    required: true,
-    icon: "product",
-    type: "text",
-  },
-  {
-    key: "plant_plant",
-    label: "Plant",
-    placeholder: "e.g. 1000",
-    required: true,
-    icon: "factory",
-    type: "text",
-  },
-  {
-    key: "PurchasingGroup_purchasingGroup",
-    label: "Purchasing Group",
-    placeholder: "e.g. P01",
-    required: true,
-    icon: "group",
-    type: "text",
-  },
-  {
-    key: "quantity",
-    label: "Quantity",
-    placeholder: "e.g. 10",
-    required: true,
-    icon: "cart",
-    type: "number",
-  },
-  {
-    key: "baseUnit",
-    label: "Base Unit",
-    placeholder: "EA / KG / PC",
-    required: false,
-    icon: "measure",
-    type: "text",
-  },
-  {
-    key: "requisitioner",
-    label: "Requisitioner",
-    placeholder: "User ID",
-    required: false,
-    icon: "employee",
-    type: "text",
-  },
-];
+  { key: "material_material", label: "Material No.", placeholder: "e.g. MAT001", required: true, icon: Boxes },
+  { key: "plant_plant", label: "Plant", placeholder: "e.g. 1000", required: true, icon: Factory },
+  { key: "PurchasingGroup_purchasingGroup", label: "Purchasing Group", placeholder: "e.g. P01", required: true, icon: Users },
+  { key: "quantity", label: "Quantity", placeholder: "e.g. 10", required: true, icon: Hash },
+  { key: "baseUnit", label: "Base Unit", placeholder: "EA / KG / PC", required: false, icon: Package },
+  { key: "requisitioner", label: "Requisitioner", placeholder: "User ID", required: false, icon: User },
+]
 
 const EMPTY_FORM = {
   material_material: "",
@@ -86,60 +62,77 @@ const EMPTY_FORM = {
   baseUnit: "EA",
   deliveryDate: "",
   requisitioner: "",
-};
+}
 
 interface PR {
-  purchaseRequisition: string;
-  purchaseReqnItem: string;
-  material?: {
-    material: string;
-    materialDescriptions?: { materialDescription: string }[];
-  };
-  plant?: { plant: string; plantName?: string };
-  quantity: number;
-  deliveryDate: string;
-  releaseStatus?: string;
-  PurchasingGroup?: { purchasingGroup: string };
-  requisitioner?: string;
+  purchaseRequisition: string
+  purchaseReqnItem: string
+  material?: { material: string; materialDescriptions?: { materialDescription: string }[] }
+  plant?: { plant: string; plantName?: string }
+  quantity: number
+  deliveryDate: string
+  releaseStatus?: string
+  PurchasingGroup?: { purchasingGroup: string }
+  requisitioner?: string
 }
 
 interface Props {
-  apiUrl: string;
+  apiUrl: string
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 100, damping: 15 },
+  },
 }
 
 export default function PurchaseRequisitionManagement({ apiUrl }: Props) {
-  const queryClient = useQueryClient();
-  const [newPR, setNewPR] = useState(EMPTY_FORM);
-  const [message, setMessage] = useState<{
-    text: string;
-    type: "positive" | "negative" | "warning";
-  } | null>(null);
-  const [formOpen, setFormOpen] = useState(true);
+  const queryClient = useQueryClient()
+  const [newPR, setNewPR] = useState(EMPTY_FORM)
+  const [message, setMessage] = useState<{ text: string; type: "positive" | "negative" | "warning" } | null>(null)
+  const [formOpen, setFormOpen] = useState(true)
+  const [search, setSearch] = useState("")
 
-  // ── GET purchase requisitions ──
-  const {
-    data: prsData,
-    isLoading,
-    isError,
-  } = useQuery({
+  // GET purchase requisitions
+  const { data: prsData, isLoading, isError } = useQuery({
     queryKey: ["purchaseRequisitions"],
     queryFn: async () => {
-      const res = await fetch(
-        `${apiUrl}/PurchaseRequisition?$expand=material,plant,PurchasingGroup&$orderby=purchaseRequisition desc`,
-      );
-      if (!res.ok) throw new Error("Failed to fetch purchase requisitions");
-      const json = await res.json();
-      return (json.value ?? json) as PR[];
+      const res = await fetch(`${apiUrl}/PurchaseRequisition?$expand=material,plant,PurchasingGroup&$orderby=purchaseRequisition desc`)
+      if (!res.ok) throw new Error("Failed to fetch purchase requisitions")
+      const json = await res.json()
+      return (json.value ?? json) as PR[]
     },
-  });
+  })
 
-  const prs = prsData ?? [];
+  const prs = prsData ?? []
+  const filtered = prs.filter(
+    (p) =>
+      p.purchaseRequisition.toLowerCase().includes(search.toLowerCase()) ||
+      p.material?.material?.toLowerCase().includes(search.toLowerCase()) ||
+      p.plant?.plant?.toLowerCase().includes(search.toLowerCase())
+  )
 
-  const totalQty = prs.reduce((s, p) => s + (p.quantity || 0), 0);
-  const released = prs.filter((p) => p.releaseStatus === "REL").length;
-  const pending = prs.filter(
-    (p) => !p.releaseStatus || p.releaseStatus === "PENDING",
-  ).length;
+  const totalQty = prs.reduce((s, p) => s + (p.quantity || 0), 0)
+  const released = prs.filter((p) => p.releaseStatus === "REL").length
+  const pending = prs.filter((p) => !p.releaseStatus || p.releaseStatus === "PENDING").length
+
+  const kpis = [
+    { label: "Total PRs", value: prs.length, icon: FileText, gradient: "from-blue-500 to-indigo-500", bgGlow: "bg-blue-500/10" },
+    { label: "Released", value: released, icon: CheckCircle2, gradient: "from-emerald-500 to-teal-500", bgGlow: "bg-emerald-500/10" },
+    { label: "Pending", value: pending, icon: Clock, gradient: "from-amber-500 to-orange-500", bgGlow: "bg-amber-500/10" },
+    { label: "Total Qty", value: totalQty.toLocaleString(), icon: Package, gradient: "from-violet-500 to-purple-500", bgGlow: "bg-violet-500/10" },
+  ]
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof EMPTY_FORM) => {
@@ -155,636 +148,357 @@ export default function PurchaseRequisitionManagement({ apiUrl }: Props) {
           requisitioner: data.requisitioner || "SYSTEM",
           PurchaseRequisitionType: "NB",
         },
-      ];
+      ]
 
       const res = await fetch(`${apiUrl}/createPurchaseRequisition`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: payload }),
-      });
-      if (!res.ok) throw await res.json();
-      return res.json();
+      })
+      if (!res.ok) throw await res.json()
+      return res.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["purchaseRequisitions"] });
-      setMessage({
-        text: "Purchase Requisition created successfully.",
-        type: "positive",
-      });
-      setNewPR(EMPTY_FORM);
+      queryClient.invalidateQueries({ queryKey: ["purchaseRequisitions"] })
+      setMessage({ text: "Purchase Requisition created successfully.", type: "positive" })
+      setNewPR(EMPTY_FORM)
+      setTimeout(() => setMessage(null), 4000)
     },
     onError: (err: any) => {
-      const detail =
-        err?.error?.message || err?.message || "An error occurred.";
-      setMessage({ text: detail, type: "negative" });
+      const detail = err?.error?.message || err?.message || "An error occurred."
+      setMessage({ text: detail, type: "negative" })
+      setTimeout(() => setMessage(null), 4000)
     },
-  });
+  })
 
   const field = (key: keyof typeof EMPTY_FORM) => ({
     value: newPR[key],
-    onChange: (e: any) =>
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
       setNewPR((prev) => ({ ...prev, [key]: e.target.value })),
-  });
+  })
 
-  const statusCfg = (status?: string) =>
-    STATUS_CONFIG[status || "PENDING"] ?? STATUS_CONFIG["PENDING"];
+  const statusCfg = (status?: string) => STATUS_CONFIG[status || "PENDING"] ?? STATUS_CONFIG["PENDING"]
 
-  if (isLoading)
+  const handleSubmit = () => {
+    const requiredFields = FIELD_CONFIGS.filter((f) => f.required).map((f) => f.key)
+    const missingField = requiredFields.filter((key) => !newPR[key as keyof typeof EMPTY_FORM])
+    if (missingField.length > 0 || !newPR.deliveryDate) {
+      setMessage({ type: "warning", text: "Please fill in all required fields." })
+      setTimeout(() => setMessage(null), 4000)
+      return
+    }
+    createMutation.mutate(newPR)
+  }
+
+  if (isLoading) {
     return (
-      <div style={styles.loadingWrap}>
-        <BusyIndicator active size="L" />
-        <p style={styles.loadingText}>Loading Purchase Requisitions…</p>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground">Loading Purchase Requisitions...</p>
+        </div>
       </div>
-    );
+    )
+  }
 
-  if (isError)
+  if (isError) {
     return (
-      <div style={styles.loadingWrap}>
-        <Icon name="error" style={{ fontSize: "40px", color: "#dc2626" }} />
-        <p style={styles.loadingText}>
-          Failed to load data. Check your API connection.
-        </p>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <X className="h-10 w-10 text-destructive" />
+          <p className="text-muted-foreground">Failed to load data. Check your API connection.</p>
+        </div>
       </div>
-    );
+    )
+  }
 
   return (
-    <div style={styles.page}>
-      {/* ── Page header ── */}
-      <div style={styles.pageHeader}>
-        <div style={styles.pageHeaderLeft}>
-          <div style={styles.headerIcon}>
-            <Icon
-              name="document-text"
-              style={{ fontSize: "22px", color: "#fff" }}
-            />
-          </div>
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+      {/* Header */}
+      <motion.div variants={itemVariants} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-4">
+          <motion.div
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/25"
+            whileHover={{ scale: 1.05, rotate: 5 }}
+          >
+            <FileText className="h-7 w-7 text-white" />
+          </motion.div>
           <div>
-            <p style={styles.headerSub}>SAP • Procurement Module</p>
-            <h1 style={styles.headerTitle}>Purchase Requisitions</h1>
+            <p className="text-sm text-muted-foreground">SAP Procurement Module</p>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Purchase Requisitions</h1>
           </div>
         </div>
-        <div style={styles.headerBadge}>{prs.length} Records</div>
-      </div>
+        <Badge variant="outline" className="gap-2 rounded-full px-4 py-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+          {prs.length} Records
+        </Badge>
+      </motion.div>
 
-      {/* ── KPI strip ── */}
-      <div style={styles.kpiStrip}>
-        {[
-          {
-            label: "Total PRs",
-            value: prs.length,
-            accent: "#2563eb",
-            icon: "document",
-          },
-          {
-            label: "Released",
-            value: released,
-            accent: "#16a34a",
-            icon: "accept",
-          },
-          {
-            label: "Pending Review",
-            value: pending,
-            accent: "#d97706",
-            icon: "pending",
-          },
-          {
-            label: "Total Quantity",
-            value: totalQty,
-            accent: "#7c3aed",
-            icon: "cart",
-          },
-        ].map((kpi) => (
-          <div
-            key={kpi.label}
-            style={{ ...styles.kpiCard, borderTop: `3px solid ${kpi.accent}` }}
-          >
-            <div
-              style={{
-                ...styles.kpiIcon,
-                background: kpi.accent + "18",
-                color: kpi.accent,
-              }}
-            >
-              <Icon name={kpi.icon} style={{ fontSize: "18px" }} />
-            </div>
-            <div>
-              <p style={styles.kpiValue}>{kpi.value}</p>
-              <p style={styles.kpiLabel}>{kpi.label}</p>
-            </div>
-          </div>
+      {/* KPI Strip */}
+      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {kpis.map((kpi, index) => (
+          <motion.div key={kpi.label} variants={itemVariants} whileHover={{ scale: 1.02, y: -4 }} className="group">
+            <Card className="relative overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:shadow-lg">
+              <div className={`absolute inset-0 ${kpi.bgGlow} opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100`} />
+              <CardContent className="relative flex items-center gap-4 p-4">
+                <motion.div
+                  whileHover={{ rotate: 5 }}
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${kpi.gradient} shadow-md`}
+                >
+                  <kpi.icon className="h-6 w-6 text-white" />
+                </motion.div>
+                <div>
+                  <motion.p
+                    className="text-2xl font-bold tabular-nums"
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 + index * 0.1 }}
+                  >
+                    {kpi.value}
+                  </motion.p>
+                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      {/* ── Message ── */}
-      {message && (
-        <div style={styles.messageWrap}>
-          <MessageStrip
-            design={
+      {/* Message Toast */}
+      <AnimatePresence>
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`flex items-center justify-between rounded-lg border p-4 ${
               message.type === "positive"
-                ? "Positive"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 : message.type === "warning"
-                  ? "Warning"
-                  : "Negative"
-            }
-            onClose={() => setMessage(null)}
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  : "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
+            }`}
           >
-            {message.text}
-          </MessageStrip>
-        </div>
-      )}
+            <span className="font-medium">{message.text}</span>
+            <Button variant="ghost" size="icon" onClick={() => setMessage(null)} className="h-6 w-6">
+              <X className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div style={styles.contentGrid}>
-        {/* ── LEFT: Create form ── */}
-        <div style={styles.formPanel}>
-          <div style={styles.panelHeader}>
-            <div style={styles.panelHeaderLeft}>
-              <div style={styles.panelDot} />
-              <span style={styles.panelTitle}>New Requisition</span>
-            </div>
-            <button
-              style={styles.collapseBtn}
-              onClick={() => setFormOpen((o) => !o)}
-            >
-              {formOpen ? "−" : "+"}
-            </button>
-          </div>
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+        {/* Left: Create Form */}
+        <motion.div variants={itemVariants}>
+          <Collapsible open={formOpen} onOpenChange={setFormOpen}>
+            <Card className="overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm">
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer border-b border-border/50 transition-colors hover:bg-secondary/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-amber-500 shadow-lg shadow-amber-500/50" />
+                      <CardTitle className="text-base font-semibold">New Requisition</CardTitle>
+                    </div>
+                    <motion.div animate={{ rotate: formOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    </motion.div>
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
 
-          {formOpen && (
-            <div style={styles.formBody}>
-              <div style={styles.formTypeTag}>Type: NB — Standard PR</div>
+              <CollapsibleContent>
+                <CardContent className="space-y-4 p-6">
+                  <Badge variant="secondary" className="mb-2 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    Type: NB — Standard PR
+                  </Badge>
 
-              {FIELD_CONFIGS.map((cfg) => (
-                <div key={cfg.key} style={styles.fieldGroup}>
-                  <label style={styles.fieldLabel}>
-                    {cfg.label}
-                    {cfg.required && <span style={styles.required}> *</span>}
-                  </label>
-                  <div style={styles.inputWrap}>
-                    <Icon name={cfg.icon} style={styles.inputIcon} />
+                  {FIELD_CONFIGS.map((cfg, index) => (
+                    <motion.div
+                      key={cfg.key}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="space-y-2"
+                    >
+                      <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                        {cfg.label}
+                        {cfg.required && <span className="text-destructive">*</span>}
+                      </label>
+                      <div className="relative">
+                        <cfg.icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          {...field(cfg.key as keyof typeof EMPTY_FORM)}
+                          placeholder={cfg.placeholder}
+                          className="border-border/50 bg-secondary/30 pl-10"
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {/* Delivery Date */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: FIELD_CONFIGS.length * 0.05 }}
+                    className="space-y-2"
+                  >
+                    <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                      Delivery Date
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input type="date" {...field("deliveryDate")} className="border-border/50 bg-secondary/30 pl-10" />
+                    </div>
+                  </motion.div>
+
+                  <div className="my-4 h-px bg-border/50" />
+
+                  <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={createMutation.isPending}
+                      className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+                    >
+                      {createMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4" />
+                          <span>Create Purchase Requisition</span>
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+
+                  <p className="text-center text-xs text-muted-foreground">
+                    Fields marked <span className="text-destructive">*</span> are mandatory.
+                  </p>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        </motion.div>
+
+        {/* Right: Table */}
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50" />
+                  <CardTitle className="text-base font-semibold">Requisition Records</CardTitle>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      {...field(cfg.key as keyof typeof EMPTY_FORM)}
-                      placeholder={cfg.placeholder}
-                      style={styles.input}
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-48 border-border/50 bg-secondary/30 pl-9"
                     />
                   </div>
-                </div>
-              ))}
-
-              {/* Delivery Date */}
-              <div style={styles.fieldGroup}>
-                <label style={styles.fieldLabel}>
-                  Delivery Date <span style={styles.required}>*</span>
-                </label>
-                <div style={styles.inputWrap}>
-                  <Icon name="appointment-2" style={styles.inputIcon} />
-                  <DatePicker
-                    value={newPR.deliveryDate}
-                    onChange={(e) =>
-                      setNewPR((p) => ({ ...p, deliveryDate: e.detail.value }))
-                    }
-                    style={styles.input}
-                    placeholder="YYYY-MM-DD"
-                  />
+                  <Badge variant="secondary" className="rounded-full">
+                    {filtered.length} items
+                  </Badge>
                 </div>
               </div>
-
-              <div style={styles.formDivider} />
-
-              <Button
-                style={styles.submitBtn}
-                onClick={() => createMutation.mutate(newPR)}
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? (
-                  <FlexBox
-                    alignItems={FlexBoxAlignItems.Center}
-                    style={{ gap: "8px" }}
+            </CardHeader>
+            <CardContent className="p-0">
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    <BusyIndicator active size="S" />
-                    <span>Submitting…</span>
-                  </FlexBox>
-                ) : (
-                  <FlexBox
-                    alignItems={FlexBoxAlignItems.Center}
-                    style={{ gap: "8px" }}
-                  >
-                    <Icon name="add" />
-                    <span>Create Purchase Requisition</span>
-                  </FlexBox>
-                )}
-              </Button>
-
-              <p style={styles.formHint}>
-                Fields marked <span style={styles.required}>*</span> are
-                mandatory.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* ── RIGHT: Table ── */}
-        <div style={styles.tablePanel}>
-          <div style={styles.panelHeader}>
-            <div style={styles.panelHeaderLeft}>
-              <div style={{ ...styles.panelDot, background: "#2563eb" }} />
-              <span style={styles.panelTitle}>Requisition Records</span>
-            </div>
-            <span style={styles.tableCount}>{prs.length} items</span>
-          </div>
-
-          <div style={styles.tableWrap}>
-            {prs.length === 0 ? (
-              <div style={styles.emptyState}>
-                <Icon
-                  name="document"
-                  style={{ fontSize: "48px", color: "#d1d5db" }}
-                />
-                <p style={styles.emptyTitle}>No Records Found</p>
-                <p style={styles.emptySubtitle}>
-                  Create your first purchase requisition using the form.
-                </p>
-              </div>
-            ) : (
-              <table style={styles.htmlTable}>
-                <thead>
-                  <tr>
-                    {[
-                      "PR Number",
-                      "Item",
-                      "Material",
-                      "Plant",
-                      "Qty",
-                      "Delivery Date",
-                      "Purch. Group",
-                      "Requisitioner",
-                      "Status",
-                    ].map((h) => (
-                      <th key={h} style={styles.th}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {prs.map((pr, i) => {
-                    const cfg = statusCfg(pr.releaseStatus);
-                    return (
-                      <tr
-                        key={`${pr.purchaseRequisition}-${pr.purchaseReqnItem}`}
-                        style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}
-                      >
-                        <td style={styles.td}>
-                          <span style={styles.prNumber}>
-                            {pr.purchaseRequisition}
-                          </span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.itemBadge}>
-                            {pr.purchaseReqnItem}
-                          </span>
-                        </td>
-                        <td style={styles.td}>
-                          <p style={styles.cellPrimary}>
-                            {pr.material?.material ?? "—"}
-                          </p>
-                          <p style={styles.cellSecondary}>
-                            {pr.material?.materialDescriptions?.[0]
-                              ?.materialDescription ?? ""}
-                          </p>
-                        </td>
-                        <td style={styles.td}>
-                          <p style={styles.cellPrimary}>
-                            {pr.plant?.plant ?? "—"}
-                          </p>
-                          <p style={styles.cellSecondary}>
-                            {pr.plant?.plantName ?? ""}
-                          </p>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.qtyBadge}>{pr.quantity}</span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.cellDate}>{pr.deliveryDate}</span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.cellSecondary}>
-                            {pr.PurchasingGroup?.purchasingGroup ?? "—"}
-                          </span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.cellSecondary}>
-                            {pr.requisitioner ?? "—"}
-                          </span>
-                        </td>
-                        <td style={styles.td}>
-                          <span
-                            style={{
-                              ...styles.statusPill,
-                              color: cfg.color,
-                              background: cfg.bg,
-                              border: `1px solid ${cfg.color}30`,
-                            }}
+                    <FileText className="h-12 w-12 text-muted-foreground/50" />
+                  </motion.div>
+                  <p className="mt-4 font-medium text-muted-foreground">No Records Found</p>
+                  <p className="text-sm text-muted-foreground">Create your first purchase requisition using the form.</p>
+                </div>
+              ) : (
+                <div className="max-h-[600px] overflow-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-card">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead>PR Number</TableHead>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Plant</TableHead>
+                        <TableHead>Qty</TableHead>
+                        <TableHead>Delivery Date</TableHead>
+                        <TableHead>Purch. Group</TableHead>
+                        <TableHead>Requisitioner</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((pr, i) => {
+                        const cfg = statusCfg(pr.releaseStatus)
+                        return (
+                          <motion.tr
+                            key={`${pr.purchaseRequisition}-${pr.purchaseReqnItem}`}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.03 }}
+                            className="group hover:bg-secondary/30"
                           >
-                            {cfg.label}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
+                            <TableCell>
+                              <Badge variant="outline" className="font-mono font-bold">
+                                {pr.purchaseRequisition}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="font-mono">
+                                {pr.purchaseReqnItem}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{pr.material?.material ?? "—"}</p>
+                                <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                  {pr.material?.materialDescriptions?.[0]?.materialDescription ?? ""}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{pr.plant?.plant ?? "—"}</p>
+                                <p className="text-xs text-muted-foreground">{pr.plant?.plantName ?? ""}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="font-mono font-bold">
+                                {pr.quantity}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{pr.deliveryDate}</TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {pr.PurchasingGroup?.purchasingGroup ?? "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{pr.requisitioner ?? "—"}</TableCell>
+                            <TableCell>
+                              <Badge className={`${cfg.bg} ${cfg.color} border-0`}>{cfg.label}</Badge>
+                            </TableCell>
+                          </motion.tr>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-    </div>
-  );
+    </motion.div>
+  )
 }
-
-// ─────────────────────────── styles ───────────────────────────
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-    background: "#f1f5f9",
-    minHeight: "100vh",
-    padding: "24px 32px",
-    boxSizing: "border-box",
-  },
-
-  // Header
-  pageHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "24px",
-  },
-  pageHeaderLeft: { display: "flex", alignItems: "center", gap: "14px" },
-  headerIcon: {
-    width: "46px",
-    height: "46px",
-    borderRadius: "12px",
-    background: "linear-gradient(135deg, #1e40af, #3b82f6)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 4px 12px #3b82f640",
-  },
-  headerSub: {
-    margin: 0,
-    fontSize: "11px",
-    color: "#64748b",
-    letterSpacing: "0.06em",
-    textTransform: "uppercase",
-  },
-  headerTitle: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: 700,
-    color: "#0f172a",
-    lineHeight: 1.2,
-  },
-  headerBadge: {
-    padding: "6px 14px",
-    background: "#e0e7ff",
-    color: "#3730a3",
-    borderRadius: "999px",
-    fontSize: "12px",
-    fontWeight: 600,
-  },
-
-  // KPI
-  kpiStrip: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "14px",
-    marginBottom: "20px",
-  },
-  kpiCard: {
-    background: "#fff",
-    borderRadius: "12px",
-    padding: "16px 18px",
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    boxShadow: "0 1px 4px #0001",
-  },
-  kpiIcon: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "10px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  kpiValue: { margin: 0, fontSize: "22px", fontWeight: 700, color: "#0f172a" },
-  kpiLabel: { margin: 0, fontSize: "11px", color: "#64748b", marginTop: "2px" },
-
-  // Message
-  messageWrap: { marginBottom: "16px" },
-
-  // Layout
-  contentGrid: {
-    display: "grid",
-    gridTemplateColumns: "320px 1fr",
-    gap: "20px",
-    alignItems: "start",
-  },
-
-  // Panels shared
-  panelHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "14px 18px",
-    borderBottom: "1px solid #e2e8f0",
-  },
-  panelHeaderLeft: { display: "flex", alignItems: "center", gap: "10px" },
-  panelDot: {
-    width: "10px",
-    height: "10px",
-    borderRadius: "50%",
-    background: "#16a34a",
-  },
-  panelTitle: { fontSize: "14px", fontWeight: 600, color: "#0f172a" },
-
-  // Form panel
-  formPanel: {
-    background: "#fff",
-    borderRadius: "14px",
-    boxShadow: "0 2px 8px #0001",
-    overflow: "hidden",
-    position: "sticky",
-    top: "24px",
-  },
-  collapseBtn: {
-    width: "28px",
-    height: "28px",
-    borderRadius: "8px",
-    border: "1px solid #e2e8f0",
-    background: "#f8fafc",
-    cursor: "pointer",
-    fontSize: "18px",
-    lineHeight: 1,
-    color: "#475569",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  formBody: { padding: "18px" },
-  formTypeTag: {
-    background: "#eff6ff",
-    color: "#1d4ed8",
-    fontSize: "11px",
-    fontWeight: 600,
-    padding: "5px 10px",
-    borderRadius: "6px",
-    marginBottom: "16px",
-    display: "inline-block",
-    letterSpacing: "0.04em",
-  },
-  fieldGroup: { marginBottom: "13px" },
-  fieldLabel: {
-    display: "block",
-    fontSize: "11px",
-    fontWeight: 600,
-    color: "#475569",
-    marginBottom: "5px",
-    letterSpacing: "0.04em",
-    textTransform: "uppercase",
-  },
-  required: { color: "#dc2626" },
-  inputWrap: { position: "relative" },
-  inputIcon: {
-    position: "absolute",
-    left: "10px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    fontSize: "14px",
-    color: "#94a3b8",
-    zIndex: 1,
-  } as any,
-  input: { width: "100%", paddingLeft: "32px", boxSizing: "border-box" } as any,
-  formDivider: { height: "1px", background: "#e2e8f0", margin: "16px 0" },
-  submitBtn: {
-    width: "100%",
-    background: "linear-gradient(135deg, #1e40af, #3b82f6)",
-    color: "#fff",
-    fontWeight: 600,
-    borderRadius: "8px",
-    height: "40px",
-  } as any,
-  formHint: {
-    margin: "10px 0 0",
-    fontSize: "11px",
-    color: "#94a3b8",
-    textAlign: "center",
-  },
-
-  // Table panel
-  tablePanel: {
-    background: "#fff",
-    borderRadius: "14px",
-    boxShadow: "0 2px 8px #0001",
-    overflow: "hidden",
-  },
-  tableCount: { fontSize: "12px", color: "#64748b", fontWeight: 500 },
-  tableWrap: { overflowX: "auto" },
-  htmlTable: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "13px",
-  } as any,
-  th: {
-    padding: "10px 14px",
-    fontSize: "10px",
-    fontWeight: 700,
-    color: "#64748b",
-    textTransform: "uppercase",
-    letterSpacing: "0.07em",
-    background: "#f8fafc",
-    borderBottom: "2px solid #e2e8f0",
-    whiteSpace: "nowrap",
-    textAlign: "left",
-  } as any,
-  td: {
-    padding: "12px 14px",
-    borderBottom: "1px solid #f1f5f9",
-    verticalAlign: "middle",
-  } as any,
-
-  // Empty state
-  emptyState: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "60px 20px",
-    gap: "10px",
-  },
-  emptyTitle: {
-    margin: 0,
-    fontSize: "15px",
-    fontWeight: 600,
-    color: "#374151",
-  },
-  emptySubtitle: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#9ca3af",
-    textAlign: "center",
-  },
-
-  // Table cells
-  prNumber: {
-    fontFamily: "monospace",
-    fontWeight: 700,
-    fontSize: "13px",
-    color: "#1e40af",
-  },
-  itemBadge: {
-    background: "#f1f5f9",
-    color: "#475569",
-    padding: "2px 8px",
-    borderRadius: "6px",
-    fontSize: "12px",
-    fontWeight: 600,
-  },
-  cellPrimary: {
-    margin: 0,
-    fontWeight: 600,
-    fontSize: "13px",
-    color: "#0f172a",
-  },
-  cellSecondary: {
-    margin: 0,
-    fontSize: "11px",
-    color: "#64748b",
-    marginTop: "2px",
-  },
-  cellDate: { fontSize: "12px", color: "#374151", fontFamily: "monospace" },
-  qtyBadge: {
-    background: "#ede9fe",
-    color: "#6d28d9",
-    padding: "2px 10px",
-    borderRadius: "999px",
-    fontSize: "12px",
-    fontWeight: 700,
-  },
-  statusPill: {
-    padding: "3px 10px",
-    borderRadius: "999px",
-    fontSize: "11px",
-    fontWeight: 600,
-    whiteSpace: "nowrap",
-  } as any,
-  loadingWrap: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "60vh",
-    gap: "16px",
-  },
-  loadingText: { margin: 0, fontSize: "14px", color: "#64748b" },
-};
