@@ -9,8 +9,16 @@ import {
 const LOG = cds.log("service.js");
 
 export default function (service) {
+  if (service.name !== "MasterDataService") {
+    return;
+  }
+
   const { MaterialMaster } = service.entities || {};
 
+  if (!MaterialMaster) {
+    console.error("❌ MaterialMaster entity not found!");
+    return;
+  }
 
   service.on("READ", MaterialMaster, async (req) => {
     try {

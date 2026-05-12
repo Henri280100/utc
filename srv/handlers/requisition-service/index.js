@@ -11,7 +11,16 @@ import {
 const LOG = cds.log("service.js");
 
 export default function (service) {
+  console.log("Service name:", service.name);
+  console.log("Available entities:", Object.keys(service.entities || {}));
+
   const { PurchaseRequisition } = service.entities || {};
+
+  if (!PurchaseRequisition) {
+    console.error("❌ PurchaseRequisition entity not found!");
+    console.error("Available:", Object.keys(service.entities || {}));
+    return; // Exit early to prevent the error
+  }
   service.on("createPurchaseRequisition", async (req) => {
     try {
       return await onCreatePurchaseRequisition(req, service);
@@ -45,7 +54,7 @@ export default function (service) {
   });
 
   // Custom Actions (target must be provided, otherwise CAP registers with an undefined path)
-  service.on("releasePurchaseRequisition", async (req) => {
+  service.on("releasePurchaseRequisition", PurchaseRequisition, async (req) => {
     try {
       return await onUpdateReleaseStatus(req, service);
     } catch (error) {

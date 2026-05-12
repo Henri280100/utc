@@ -9,7 +9,16 @@ import {
 const LOG = cds.log("service.js");
 
 export default function(service) {
+   if (service.name !== 'PlantService') {
+    return;
+  }
+
   const { Plant, StorageLocations } = service.entities || {};
+  
+  if (!Plant) {
+    console.error('❌ Plant entity not found!');
+    return;
+  }
   service.on("READ", Plant, async (req) => {
     try {
       return await onReadPlant(req, Plant);
