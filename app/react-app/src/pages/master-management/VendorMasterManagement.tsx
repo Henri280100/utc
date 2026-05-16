@@ -4,16 +4,13 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Boxes,
+  Users,
   Plus,
   Search,
   Edit3,
   X,
   Loader2,
-  Tag,
-  Package,
-  Calendar,
-  FileText,
+  Globe,
   Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,72 +39,52 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-// Types
-interface MaterialDescription {
-  material: string;
-  language_code: string;
-  materialDescriptions: string;
-}
-
 interface InfoRecord {
   purchasingInfoRecord: string;
   material_material: string;
   supplier_supplier: string;
 }
 
-interface Material {
-  material: string;
-  materialType: string;
-  industrySector: string;
-  baseUnit: string;
-  materialGroup_materialGroup?: string;
-  creationDate?: string;
-  materialDescriptions?: MaterialDescription[];
-  infoRecords?: InfoRecord[];
+interface Vendor {
+  supplier: string;
+  supplierName: string;
+  country_code?: string;
+  city?: string;
+  street?: string;
+  materialInfoRecords?: InfoRecord[];
 }
 
 interface Props {
   apiUrl: string;
 }
 
-const EMPTY: Omit<Material, "creationDate"> = {
-  material: "",
-  materialType: "",
-  industrySector: "",
-  baseUnit: "EA",
-  materialGroup_materialGroup: "",
+const EMPTY: Omit<Vendor, "materialInfoRecords"> = {
+  supplier: "",
+  supplierName: "",
+  country_code: "",
+  city: "",
+  street: "",
 };
 
-const MATERIAL_TYPES = [
-  "FERT",
-  "HALB",
-  "ROH",
-  "HIBE",
-  "NLAG",
-  "DIEN",
-  "LEER",
-  "VERP",
-  "USED",
+const COUNTRIES = [
+  { code: "AU", name: "Australia" },
+  { code: "US", name: "United States" },
+  { code: "DE", name: "Germany" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "SG", name: "Singapore" },
+  { code: "JP", name: "Japan" },
+  { code: "CN", name: "China" },
+  { code: "IN", name: "India" },
+  { code: "VN", name: "Vietnam" },
+  { code: "MY", name: "Malaysia" },
 ];
-const INDUSTRY_SECTORS = [
-  { key: "A", label: "A — Automotive" },
-  { key: "M", label: "M — Mechanical Engineering" },
-  { key: "P", label: "P — Plant Engineering" },
-  { key: "C", label: "C — Chemical" },
-  { key: "F", label: "F — Food & Beverage" },
-];
-const BASE_UNITS = ["EA", "KG", "L", "M", "PC", "SET", "BOX", "PAL"];
 
 type AssocState = {
-  materialDescriptions: MaterialDescription[];
-  infoRecords: InfoRecord[];
+  materialInfoRecords: InfoRecord[];
 };
 
 const emptyAssocState: AssocState = {
-  materialDescriptions: [
-    { material: "", language_code: "EN", materialDescriptions: "" },
-  ],
-  infoRecords: [
+  materialInfoRecords: [
     { purchasingInfoRecord: "", material_material: "", supplier_supplier: "" },
   ],
 };
@@ -129,7 +106,7 @@ const itemVariants = {
   },
 };
 
-export default function MaterialManagement({ apiUrl }: Props) {
+export default function VendorManagement({ apiUrl }: Props) {
   const qc = useQueryClient();
   const [form, setForm] = useState<typeof EMPTY>(EMPTY);
   const [assoc, setAssoc] = useState<AssocState>(emptyAssocState);
@@ -143,24 +120,19 @@ export default function MaterialManagement({ apiUrl }: Props) {
 
   const derivedAssoc = useMemo<AssocState>(() => {
     return {
-      ...assoc,
-      materialDescriptions: assoc.materialDescriptions.map((d) => ({
-        ...d,
-        material: form.material,
-      })),
-      infoRecords: assoc.infoRecords.map((r) => ({
+      materialInfoRecords: assoc.materialInfoRecords.map((r) => ({
         ...r,
-        material_material: form.material,
+        supplier_supplier: form.supplier,
       })),
     };
-  }, [assoc, form.material]);
+  }, [assoc, form.supplier]);
 
   // GET
-  const { data: materials = [], isLoading } = useQuery<Material[]>({
-    queryKey: ["materials"],
+  const { data: vendors = [], isLoading } = useQuery<Vendor[]>({
+    queryKey: ["vendors"],
     queryFn: async () => {
       const res = await fetch(
-        `${apiUrl}/MaterialMaster?$expand=materialDescriptions,infoRecords`,
+        `${apiUrl}/VendorMaster?$expand=materialInfoRecords`,
       );
       if (!res.ok) throw new Error("Failed to fetch");
       const j = await res.json();
@@ -168,22 +140,17 @@ export default function MaterialManagement({ apiUrl }: Props) {
     },
   });
 
-  const filtered = materials.filter(
-    (m) =>
-      m.material.toLowerCase().includes(search.toLowerCase()) ||
-      m.materialType?.toLowerCase().includes(search.toLowerCase()) ||
-      m.materialDescriptions?.[0]?.materialDescriptions
-        ?.toLowerCase()
-        .includes(search.toLowerCase()),
+  const filtered = vendors.filter(
+    (v) =>
+      v.supplier.toLowerCase().includes(search.toLowerCase()) ||
+      v.supplierName?.toLowerCase().includes(search.toLowerCase()) ||
+      v.city?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const createPayload = () => ({
     ...form,
-    materialDescriptions: derivedAssoc.materialDescriptions.filter(
-      (d) => d.language_code && d.materialDescriptions,
-    ),
-    infoRecords: derivedAssoc.infoRecords.filter(
-      (r) => r.purchasingInfoRecord && r.supplier_supplier,
+    materialInfoRecords: derivedAssoc.materialInfoRecords.filter(
+      (r) => r.purchasingInfoRecord && r.material_material,
     ),
   });
 
@@ -191,7 +158,7 @@ export default function MaterialManagement({ apiUrl }: Props) {
   const createMut = useMutation({
     mutationFn: async () => {
       const payload = createPayload();
-      const res = await fetch(`${apiUrl}/MaterialMaster`, {
+      const res = await fetch(`${apiUrl}/VendorMaster`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -203,8 +170,8 @@ export default function MaterialManagement({ apiUrl }: Props) {
       return res.json();
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["materials"] });
-      setMsg({ text: "Material created successfully.", ok: true });
+      qc.invalidateQueries({ queryKey: ["vendors"] });
+      setMsg({ text: "Vendor created successfully.", ok: true });
       setForm(EMPTY);
       setAssoc(emptyAssocState);
       setPanel("list");
@@ -220,7 +187,7 @@ export default function MaterialManagement({ apiUrl }: Props) {
   const updateMut = useMutation({
     mutationFn: async (data: { id: string }) => {
       const payload = createPayload();
-      const res = await fetch(`${apiUrl}/MaterialMaster('${data.id}')`, {
+      const res = await fetch(`${apiUrl}/VendorMaster('${data.id}')`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -232,8 +199,8 @@ export default function MaterialManagement({ apiUrl }: Props) {
       return res.json();
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["materials"] });
-      setMsg({ text: "Material updated successfully.", ok: true });
+      qc.invalidateQueries({ queryKey: ["vendors"] });
+      setMsg({ text: "Vendor updated successfully.", ok: true });
       setEditing(null);
       setForm(EMPTY);
       setAssoc(emptyAssocState);
@@ -246,35 +213,28 @@ export default function MaterialManagement({ apiUrl }: Props) {
     },
   });
 
-  const startEdit = (m: Material) => {
+  const startEdit = (v: Vendor) => {
     setForm({
-      material: m.material,
-      materialType: m.materialType,
-      industrySector: m.industrySector,
-      baseUnit: m.baseUnit,
-      materialGroup_materialGroup: m.materialGroup_materialGroup ?? "",
+      supplier: v.supplier,
+      supplierName: v.supplierName,
+      country_code: v.country_code ?? "",
+      city: v.city ?? "",
+      street: v.street ?? "",
     });
     setAssoc({
-      materialDescriptions: m.materialDescriptions?.map((d) => ({
-        material: m.material,
-        language_code: d.language_code,
-        materialDescriptions: d.materialDescriptions,
-      })) ?? [
-        { material: m.material, language_code: "EN", materialDescriptions: "" },
-      ],
-      infoRecords: m.infoRecords?.map((r) => ({
+      materialInfoRecords: v.materialInfoRecords?.map((r) => ({
         purchasingInfoRecord: r.purchasingInfoRecord,
-        material_material: m.material,
-        supplier_supplier: r.supplier_supplier,
+        material_material: r.material_material,
+        supplier_supplier: v.supplier,
       })) ?? [
         {
           purchasingInfoRecord: "",
-          material_material: m.material,
-          supplier_supplier: "",
+          material_material: "",
+          supplier_supplier: v.supplier,
         },
       ],
     });
-    setEditing(m.material);
+    setEditing(v.supplier);
     setPanel("form");
   };
 
@@ -299,39 +259,14 @@ export default function MaterialManagement({ apiUrl }: Props) {
 
   const isPending = createMut.isPending || updateMut.isPending;
 
-  // Association helpers
-  const addDescRow = () => {
-    setAssoc((p) => ({
-      ...p,
-      materialDescriptions: [
-        ...p.materialDescriptions,
-        {
-          material: form.material,
-          language_code: "EN",
-          materialDescriptions: "",
-        },
-      ],
-    }));
-  };
-
-  const removeDescRow = (index: number) => {
-    setAssoc((p) => ({
-      ...p,
-      materialDescriptions: p.materialDescriptions.filter(
-        (_, i) => i !== index,
-      ),
-    }));
-  };
-
   const addInfoRow = () => {
     setAssoc((p) => ({
-      ...p,
-      infoRecords: [
-        ...p.infoRecords,
+      materialInfoRecords: [
+        ...p.materialInfoRecords,
         {
           purchasingInfoRecord: "",
-          material_material: form.material,
-          supplier_supplier: "",
+          material_material: "",
+          supplier_supplier: form.supplier,
         },
       ],
     }));
@@ -339,10 +274,14 @@ export default function MaterialManagement({ apiUrl }: Props) {
 
   const removeInfoRow = (index: number) => {
     setAssoc((p) => ({
-      ...p,
-      infoRecords: p.infoRecords.filter((_, i) => i !== index),
+      materialInfoRecords: p.materialInfoRecords.filter(
+        (_, i) => i !== index,
+      ),
     }));
   };
+
+  const countryName = (code?: string) =>
+    COUNTRIES.find((c) => c.code === code)?.name ?? code ?? "—";
 
   return (
     <motion.div
@@ -358,29 +297,29 @@ export default function MaterialManagement({ apiUrl }: Props) {
       >
         <div className="flex items-center gap-4">
           <motion.div
-            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/25"
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25"
             whileHover={{ scale: 1.05, rotate: 5 }}
           >
-            <Boxes className="h-7 w-7 text-white" />
+            <Users className="h-7 w-7 text-white" />
           </motion.div>
           <div>
             <p className="text-sm text-muted-foreground">Master Data</p>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Material Master
+              Vendor Master
             </h1>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="gap-2 rounded-full px-4 py-2">
-            <Boxes className="h-4 w-4" />
-            {materials.length} Materials
+            <Users className="h-4 w-4" />
+            {vendors.length} Vendors
           </Badge>
           <Button
             onClick={startCreate}
-            className="gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
+            className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
           >
             <Plus className="h-4 w-4" />
-            New Material
+            New Vendor
           </Button>
         </div>
       </motion.div>
@@ -424,22 +363,21 @@ export default function MaterialManagement({ apiUrl }: Props) {
               <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
                 <CardHeader className="border-b border-border/50">
                   <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-cyan-500 shadow-lg shadow-cyan-500/50" />
+                    <div className="h-2 w-2 rounded-full bg-purple-500 shadow-lg shadow-purple-500/50" />
                     <CardTitle className="text-base font-semibold">
-                      {editing ? `Edit — ${editing}` : "New Material"}
+                      {editing ? `Edit — ${editing}` : "New Vendor"}
                     </CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4 p-6">
-                  {/* Basic Fields */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">
-                      Material No. *
+                      Supplier Code *
                     </label>
                     <Input
-                      value={form.material}
-                      onChange={(e) => set("material", e.target.value)}
-                      placeholder="e.g. MAT001"
+                      value={form.supplier}
+                      onChange={(e) => set("supplier", e.target.value)}
+                      placeholder="e.g. SUP001"
                       disabled={!!editing}
                       className="border-border/50 bg-secondary/30"
                     />
@@ -447,174 +385,73 @@ export default function MaterialManagement({ apiUrl }: Props) {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">
-                      Material Group
+                      Supplier Name *
                     </label>
-                    <div className="relative">
-                      <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        value={form.materialGroup_materialGroup}
-                        onChange={(e) =>
-                          set("materialGroup_materialGroup", e.target.value)
-                        }
-                        placeholder="e.g. USED_CARS"
-                        className="border-border/50 bg-secondary/30 pl-9"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Material Type *
-                      </label>
-                      <Select
-                        value={form.materialType}
-                        onValueChange={(val) => set("materialType", val)}
-                      >
-                        <SelectTrigger className="border-border/50 bg-secondary/30">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MATERIAL_TYPES.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {t}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Base Unit *
-                      </label>
-                      <Select
-                        value={form.baseUnit}
-                        onValueChange={(val) => set("baseUnit", val)}
-                      >
-                        <SelectTrigger className="border-border/50 bg-secondary/30">
-                          <Package className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {BASE_UNITS.map((u) => (
-                            <SelectItem key={u} value={u}>
-                              {u}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Input
+                      value={form.supplierName}
+                      onChange={(e) => set("supplierName", e.target.value)}
+                      placeholder="e.g. Acme Corp"
+                      className="border-border/50 bg-secondary/30"
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">
-                      Industry Sector *
+                      Country *
                     </label>
                     <Select
-                      value={form.industrySector}
-                      onValueChange={(val) => set("industrySector", val)}
+                      value={form.country_code}
+                      onValueChange={(val) => set("country_code", val)}
                     >
                       <SelectTrigger className="border-border/50 bg-secondary/30">
-                        <SelectValue placeholder="Select" />
+                        <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder="Select Country" />
                       </SelectTrigger>
                       <SelectContent>
-                        {INDUSTRY_SECTORS.map((s) => (
-                          <SelectItem key={s.key} value={s.key}>
-                            {s.label}
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Associations */}
-                  <Accordion type="multiple" className="w-full">
-                    <AccordionItem
-                      value="descriptions"
-                      className="border-border/50"
-                    >
-                      <AccordionTrigger className="text-sm font-medium">
-                        Material Descriptions
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-3 pt-2">
-                        {assoc.materialDescriptions.map((d, index) => (
-                          <div
-                            key={index}
-                            className="space-y-2 rounded-lg border border-border/50 p-3"
-                          >
-                            <div className="flex gap-2">
-                              <Input
-                                value={d.language_code}
-                                onChange={(e) =>
-                                  setAssoc((p) => ({
-                                    ...p,
-                                    materialDescriptions:
-                                      p.materialDescriptions.map((row, i) =>
-                                        i === index
-                                          ? {
-                                              ...row,
-                                              language_code: e.target.value,
-                                            }
-                                          : row,
-                                      ),
-                                  }))
-                                }
-                                placeholder="Language (EN)"
-                                className="w-20 border-border/50 bg-secondary/30"
-                              />
-                              <Input
-                                value={d.materialDescriptions}
-                                onChange={(e) =>
-                                  setAssoc((p) => ({
-                                    ...p,
-                                    materialDescriptions:
-                                      p.materialDescriptions.map((row, i) =>
-                                        i === index
-                                          ? {
-                                              ...row,
-                                              materialDescriptions:
-                                                e.target.value,
-                                            }
-                                          : row,
-                                      ),
-                                  }))
-                                }
-                                placeholder="Description"
-                                className="flex-1 border-border/50 bg-secondary/30"
-                              />
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeDescRow(index)}
-                                className="h-9 w-9 text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={addDescRow}
-                          className="w-full gap-1"
-                        >
-                          <Plus className="h-3 w-3" />
-                          Add Description
-                        </Button>
-                      </AccordionContent>
-                    </AccordionItem>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      City
+                    </label>
+                    <Input
+                      value={form.city}
+                      onChange={(e) => set("city", e.target.value)}
+                      placeholder="e.g. Berlin"
+                      className="border-border/50 bg-secondary/30"
+                    />
+                  </div>
 
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Street
+                    </label>
+                    <Input
+                      value={form.street}
+                      onChange={(e) => set("street", e.target.value)}
+                      placeholder="e.g. Main Street 123"
+                      className="border-border/50 bg-secondary/30"
+                    />
+                  </div>
+
+                  {/* Material Info Records */}
+                  <Accordion type="multiple" className="w-full">
                     <AccordionItem
                       value="inforecords"
                       className="border-border/50"
                     >
                       <AccordionTrigger className="text-sm font-medium">
-                        Info Records
+                        Material Info Records
                       </AccordionTrigger>
                       <AccordionContent className="space-y-3 pt-2">
-                        {assoc.infoRecords.map((r, index) => (
+                        {assoc.materialInfoRecords.map((r, index) => (
                           <div
                             key={index}
                             className="space-y-2 rounded-lg border border-border/50 p-3"
@@ -624,37 +461,37 @@ export default function MaterialManagement({ apiUrl }: Props) {
                                 value={r.purchasingInfoRecord}
                                 onChange={(e) =>
                                   setAssoc((p) => ({
-                                    ...p,
-                                    infoRecords: p.infoRecords.map((row, i) =>
-                                      i === index
-                                        ? {
-                                            ...row,
-                                            purchasingInfoRecord:
-                                              e.target.value,
-                                          }
-                                        : row,
-                                    ),
+                                    materialInfoRecords:
+                                      p.materialInfoRecords.map((row, i) =>
+                                        i === index
+                                          ? {
+                                              ...row,
+                                              purchasingInfoRecord:
+                                                e.target.value,
+                                            }
+                                          : row,
+                                      ),
                                   }))
                                 }
                                 placeholder="Info Record #"
                                 className="flex-1 border-border/50 bg-secondary/30"
                               />
                               <Input
-                                value={r.supplier_supplier}
+                                value={r.material_material}
                                 onChange={(e) =>
                                   setAssoc((p) => ({
-                                    ...p,
-                                    infoRecords: p.infoRecords.map((row, i) =>
-                                      i === index
-                                        ? {
-                                            ...row,
-                                            supplier_supplier: e.target.value,
-                                          }
-                                        : row,
-                                    ),
+                                    materialInfoRecords:
+                                      p.materialInfoRecords.map((row, i) =>
+                                        i === index
+                                          ? {
+                                              ...row,
+                                              material_material: e.target.value,
+                                            }
+                                          : row,
+                                      ),
                                   }))
                                 }
-                                placeholder="Supplier"
+                                placeholder="Material"
                                 className="flex-1 border-border/50 bg-secondary/30"
                               />
                               <Button
@@ -692,7 +529,7 @@ export default function MaterialManagement({ apiUrl }: Props) {
                     <Button
                       onClick={submit}
                       disabled={isPending}
-                      className="flex-[2] bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                      className="flex-[2] bg-gradient-to-r from-purple-500 to-pink-500 text-white"
                     >
                       {isPending ? (
                         <>
@@ -700,9 +537,9 @@ export default function MaterialManagement({ apiUrl }: Props) {
                           Saving...
                         </>
                       ) : editing ? (
-                        "Update Material"
+                        "Update Vendor"
                       ) : (
-                        "Create Material"
+                        "Create Vendor"
                       )}
                     </Button>
                   </div>
@@ -723,7 +560,7 @@ export default function MaterialManagement({ apiUrl }: Props) {
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search materials..."
+                    placeholder="Search vendors..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="border-border/50 bg-secondary/30 pl-9"
@@ -741,61 +578,67 @@ export default function MaterialManagement({ apiUrl }: Props) {
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20">
-                  <Boxes className="h-12 w-12 text-muted-foreground/50" />
+                  <Users className="h-12 w-12 text-muted-foreground/50" />
                   <p className="mt-4 text-muted-foreground">
-                    No materials found
+                    No vendors found
                   </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                      <TableHead>Material</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Sector</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Group</TableHead>
+                      <TableHead>Supplier</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Country</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>Info Records</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map((m) => (
-                      <TableRow key={m.material} className="group">
+                    {filtered.map((v) => (
+                      <TableRow key={v.supplier} className="group">
                         <TableCell>
                           <Badge
                             variant="outline"
                             className="font-mono font-bold"
                           >
-                            {m.material}
+                            {v.supplier}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate font-medium">
-                          {m.materialDescriptions?.[0]?.materialDescriptions ??
-                            "—"}
+                        <TableCell className="font-medium">
+                          {v.supplierName}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{m.materialType}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {INDUSTRY_SECTORS.find(
-                            (s) => s.key === m.industrySector,
-                          )?.label ?? m.industrySector}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="gap-1">
-                            <Package className="h-3 w-3" />
-                            {m.baseUnit}
+                          <Badge variant="secondary" className="gap-1">
+                            <Globe className="h-3 w-3" />
+                            {v.country_code} — {countryName(v.country_code)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {m.materialGroup_materialGroup ?? "—"}
+                          {v.city ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              (v.materialInfoRecords?.length ?? 0) > 0
+                                ? "default"
+                                : "secondary"
+                            }
+                            className={
+                              (v.materialInfoRecords?.length ?? 0) > 0
+                                ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                                : ""
+                            }
+                          >
+                            {v.materialInfoRecords?.length ?? 0} records
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => startEdit(m)}
+                            onClick={() => startEdit(v)}
                             className="gap-1 opacity-0 transition-opacity group-hover:opacity-100"
                           >
                             <Edit3 className="h-4 w-4" />
