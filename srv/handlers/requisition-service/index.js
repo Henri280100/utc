@@ -34,7 +34,7 @@ export default function (service) {
   // After Read - Expand associations
   service.on("READ", PurchaseRequisition, async (req) => {
     try {
-      return await onReadPurchaseRequisition(req, service);
+      return await onReadPurchaseRequisition(req, PurchaseRequisition);
     } catch (error) {
       req.error(error.message);
       LOG.error(error.message);

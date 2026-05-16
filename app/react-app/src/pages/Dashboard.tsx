@@ -28,6 +28,8 @@ import {
   Sparkles,
   Package,
   BarChart3,
+  Users,
+  DollarSign,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,14 +83,32 @@ const APPS = [
     borderLight: "border-emerald-200 dark:border-emerald-800",
   },
   {
-    path: "/purchase",
-    label: "Purchase Requisitions",
-    desc: "Create and track purchase requisitions across all procurement groups.",
-    icon: FileText,
+    path: "/vendor",
+    label: "Vendor Master",
+    desc: "Manage supplier data, contact information, and vendor details.",
+    icon: Users,
+    gradient: "from-purple-500 to-pink-500",
+    bgLight: "bg-purple-50 dark:bg-purple-950/30",
+    borderLight: "border-purple-200 dark:border-purple-800",
+  },
+  {
+    path: "/purchasing-org",
+    label: "Purchasing Organization",
+    desc: "Configure purchasing organizations, pricing, and info records.",
+    icon: DollarSign,
     gradient: "from-amber-500 to-orange-500",
     bgLight: "bg-amber-50 dark:bg-amber-950/30",
     borderLight: "border-amber-200 dark:border-amber-800",
   },
+  {
+    path: "/purchase",
+    label: "Purchase Requisitions",
+    desc: "Create and track purchase requisitions across all procurement groups.",
+    icon: FileText,
+    gradient: "from-indigo-500 to-blue-500",
+    bgLight: "bg-indigo-50 dark:bg-indigo-950/30",
+    borderLight: "border-indigo-200 dark:border-indigo-800",
+  }
 ];
 
 const containerVariants = {
@@ -128,7 +148,7 @@ export default function Dashboard({ apiBase }: DashboardProps) {
   const { data: materials = [] } = useQuery<any[]>({
     queryKey: ["dash-materials"],
     queryFn: async () => {
-      const r = await fetch(`${apiBase}/master-data/MaterialMaster`);
+      const r = await fetch(`${apiBase}/material-masters/MaterialMaster`);
       const j = await r.json();
       return j.value ?? j;
     },
@@ -138,7 +158,7 @@ export default function Dashboard({ apiBase }: DashboardProps) {
     queryKey: ["dash-plants"],
     queryFn: async () => {
       const r = await fetch(
-        `${apiBase}/master-data/Plant?$expand=storageLocations`,
+        `${apiBase}/plant-masters/Plant?$expand=storageLocations`,
       );
       const j = await r.json();
       return j.value ?? j;

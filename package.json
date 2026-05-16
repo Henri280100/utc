@@ -53,15 +53,20 @@
     },
     "odata": {
       "version": "v4"
+    },
+    "server": {
+      "cors": {
+        "origin": "http://localhost:5173",
+        "credentials": true,
+        "allowedHeaders": [
+          "Content-Type",
+          "Authorization"
+        ]
+      }
     }
   },
   "sapux": [
-    "app/pr-ui5",
-    "app/purchase-order",
-    "app/good-receipt",
-    "app/supplier-invoice-processing",
-    "app/purchasing-iasnfo-records",
-    "app/management-sourcing-rfq"
+    "app/react-app"
   ],
   "imports": {
     "#cds-models/*": "./@cds-models/*/index.js"

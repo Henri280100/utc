@@ -8,7 +8,25 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // existing proxy
       "/odata": {
+        target: "http://localhost:4004",
+        changeOrigin: true,
+        secure: false,
+      },
+
+      // proxy backend endpoints used by PurchaseRequisitionManagement.tsx
+      "/PurchaseRequisition": {
+        target: "http://localhost:4004",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/createPurchaseRequisition": {
+        target: "http://localhost:4004",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/releasePurchaseRequisition": {
         target: "http://localhost:4004",
         changeOrigin: true,
         secure: false,

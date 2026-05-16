@@ -192,9 +192,11 @@ export default function PurchaseRequisitionManagement({ apiUrl }: Props) {
   const [search, setSearch] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [selectedPR, setSelectedPR] = useState<PR | null>(null);
+  
+  
   // GET purchase requisitions
   const {
-    data: prsData,
+    data: prsData = [],
     isLoading,
     isError,
   } = useQuery({
@@ -203,9 +205,14 @@ export default function PurchaseRequisitionManagement({ apiUrl }: Props) {
       const res = await fetch(
         `${apiUrl}/PurchaseRequisition?$expand=material,plant,PurchasingGroup&$orderby=purchaseRequisition desc`,
       );
-      if (!res.ok) throw new Error("Failed to fetch purchase requisitions");
+      console.log("Fetching from:", res);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed: ${res.status} - ${errorText}`);
+      }
+
       const json = await res.json();
-      return (json.value ?? json) as PR[];
+      return json.value as PR[];
     },
   });
 
